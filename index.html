@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CML Sizing Calculator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #07111d;
+      --bg-soft: #0d1d31;
+      --panel: rgba(10, 23, 40, 0.82);
+      --panel-strong: rgba(8, 18, 33, 0.94);
+      --panel-border: rgba(151, 192, 255, 0.16);
+      --text: #eff7ff;
+      --muted: #94aeca;
+      --accent: #72f2dc;
+      --accent-2: #5a9cff;
+      --warning: #ffd978;
+      --danger: #ff9a7a;
+      --shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+      --radius-xl: 28px;
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --radius-sm: 10px;
+      --grid-min: 280px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(90, 156, 255, 0.2), transparent 32%),
+        radial-gradient(circle at top right, rgba(114, 242, 220, 0.14), transparent 26%),
+        linear-gradient(180deg, #08111d 0%, #091828 45%, #050b13 100%);
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 28px 28px;
+      mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.6), transparent 85%);
+    }
+
+    .shell {
+      width: min(1400px, calc(100% - 32px));
+      margin: 24px auto 56px;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 28px;
+      border: 1px solid var(--panel-border);
+      border-radius: 32px;
+      background:
+        linear-gradient(135deg, rgba(90, 156, 255, 0.15), rgba(114, 242, 220, 0.06) 45%, rgba(7, 17, 29, 0.15)),
+        var(--panel-strong);
+      box-shadow: var(--shadow);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 420px;
+      height: 420px;
+      top: -180px;
+      right: -120px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(114, 242, 220, 0.28), transparent 65%);
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: rgba(114, 242, 220, 0.08);
+      border: 1px solid rgba(114, 242, 220, 0.18);
+    }
+
+    h1, h2, h3 {
+      margin: 0;
+      font-family: "Space Grotesk", sans-serif;
+      letter-spacing: -0.03em;
+    }
+
+    h1 {
+      margin-top: 18px;
+      max-width: 14ch;
+      font-size: clamp(2.6rem, 5vw, 4.8rem);
+      line-height: 0.94;
+    }
+
+    .hero-grid {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 1.3fr 0.9fr;
+      gap: 24px;
+      align-items: end;
+      margin-top: 22px;
+    }
+
+    .hero-copy {
+      max-width: 64ch;
+    }
+
+    .hero-copy p {
+      margin: 16px 0 0;
+      color: var(--muted);
+      font-size: 1.05rem;
+      line-height: 1.7;
+    }
+
+    .hero-actions,
+    .preset-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .hero-actions {
+      margin-top: 24px;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+      border: 0;
+    }
+
+    .btn {
+      min-height: 44px;
+      padding: 0 16px;
+      border-radius: 999px;
+      transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn-primary {
+      color: #041018;
+      background: linear-gradient(135deg, var(--accent), #9efbe5);
+      box-shadow: 0 12px 32px rgba(114, 242, 220, 0.22);
+    }
+
+    .btn-secondary {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+    }
+
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .hero-stat {
+      padding: 18px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(12px);
+    }
+
+    .hero-stat strong {
+      display: block;
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 2rem;
+      line-height: 1;
+    }
+
+    .hero-stat span {
+      display: block;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .stack {
+      display: grid;
+      gap: 22px;
+      margin-top: 22px;
+    }
+
+    .section-nav {
+      position: sticky;
+      top: 12px;
+      z-index: 4;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 14px;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 18px;
+      background: rgba(8, 18, 33, 0.84);
+      backdrop-filter: blur(16px);
+      box-shadow: var(--shadow);
+    }
+
+    .nav-link {
+      display: inline-flex;
+      align-items: center;
+      min-height: 40px;
+      padding: 0 14px;
+      border-radius: 999px;
+      color: var(--text);
+      text-decoration: none;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+      transition: transform 180ms ease, background 180ms ease;
+    }
+
+    .nav-link:hover {
+      transform: translateY(-1px);
+      background: rgba(114, 242, 220, 0.12);
+    }
+
+    .panel {
+      padding: 22px;
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius-xl);
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .panel-head {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: start;
+      margin-bottom: 18px;
+    }
+
+    .panel-head p,
+    .section-copy {
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .control-grid,
+    .summary-grid,
+    .custom-grid,
+    .catalog {
+      display: grid;
+      gap: 16px;
+    }
+
+    .control-grid {
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+    }
+
+    .field label {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .field input,
+    .field select {
+      min-height: 50px;
+      padding: 0 14px;
+      border-radius: 14px;
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.05);
+      outline: none;
+    }
+
+    .field input:focus,
+    .field select:focus {
+      border-color: rgba(114, 242, 220, 0.5);
+      box-shadow: 0 0 0 4px rgba(114, 242, 220, 0.1);
+    }
+
+    .preset {
+      padding: 12px 14px;
+      min-width: 170px;
+      border-radius: 16px;
+      text-align: left;
+      color: var(--text);
+      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .preset strong,
+    .metric strong {
+      display: block;
+      font-family: "Space Grotesk", sans-serif;
+    }
+
+    .preset span,
+    .metric span {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .summary-grid {
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+
+    .metric,
+    .empty {
+      padding: 18px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.04);
+    }
+
+    .metric strong {
+      font-size: 2rem;
+      margin-top: 6px;
+    }
+
+    .catalog {
+      grid-template-columns: repeat(auto-fit, minmax(var(--grid-min), 1fr));
+      margin-top: 18px;
+    }
+
+    .device-card {
+      position: relative;
+      display: grid;
+      gap: 14px;
+      padding: 18px;
+      border-radius: 22px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.03)),
+        rgba(7, 17, 29, 0.58);
+      transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+    }
+
+    .device-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(114, 242, 220, 0.22);
+    }
+
+    .device-card.active {
+      border-color: rgba(114, 242, 220, 0.36);
+      background:
+        linear-gradient(180deg, rgba(114, 242, 220, 0.09), rgba(255,255,255,0.03)),
+        rgba(7, 17, 29, 0.7);
+    }
+
+    .device-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .device-name {
+      font-size: 1.18rem;
+    }
+
+    .device-meta {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .meta-chip {
+      padding: 12px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .meta-chip strong {
+      display: block;
+      font-size: 0.88rem;
+    }
+
+    .meta-chip span {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+
+    .stepper {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .stepper button {
+      width: 38px;
+      height: 38px;
+      color: var(--text);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.08);
+    }
+
+    .stepper input {
+      width: 88px;
+      min-height: 38px;
+      text-align: center;
+      color: var(--text);
+      border: 0;
+      background: transparent;
+      font-size: 1.05rem;
+      font-weight: 600;
+      outline: none;
+    }
+
+    .custom-grid {
+      margin-top: 18px;
+    }
+
+    .custom-header,
+    .custom-row {
+      display: grid;
+      grid-template-columns: minmax(200px, 1.8fr) repeat(4, minmax(0, 1fr));
+      column-gap: 18px;
+      align-items: start;
+    }
+
+    .custom-header {
+      padding: 0 16px;
+      color: var(--muted);
+      font-size: 0.84rem;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    .custom-header > div {
+      min-width: 0;
+    }
+
+    .custom-row {
+      padding: 16px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .custom-row .field {
+      align-self: stretch;
+      min-width: 0;
+    }
+
+    .custom-row .field label {
+      min-height: 2.5em;
+      display: flex;
+      align-items: end;
+    }
+
+    .custom-row .field input {
+      width: 100%;
+      min-width: 0;
+    }
+
+    .empty {
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .status {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    @media (max-width: 1120px) {
+      .hero-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .shell {
+        width: min(100% - 20px, 1400px);
+        margin-top: 10px;
+      }
+
+      .hero,
+      .panel {
+        padding: 18px;
+        border-radius: 24px;
+      }
+
+      .hero-stats,
+      .summary-grid,
+      .catalog {
+        grid-template-columns: 1fr;
+      }
+
+      .custom-row {
+        grid-template-columns: 1fr 1fr;
+        column-gap: 14px;
+      }
+
+      .custom-header {
+        display: none;
+      }
+
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <section class="hero">
+      <div class="eyebrow">Cisco Modeling Labs · Sizing calculator</div>
+      <div class="hero-grid">
+        <div class="hero-copy">
+          <h1>Plan your CML lab experience with confidence.</h1>
+          <p>
+            Explore node combinations, estimate the resources your labs will need, and prepare for single-user or concurrent learning environments.
+          </p>
+          <div class="hero-actions">
+            <button class="btn btn-primary" id="jumpToCatalog">Start Sizing</button>
+            <button class="btn btn-secondary" id="shareLink">Copy Share Link</button>
+            <button class="btn btn-secondary" id="resetAll">Reset</button>
+          </div>
+        </div>
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <strong id="heroDevices">0</strong>
+            <span>Total active nodes</span>
+          </div>
+          <div class="hero-stat">
+            <strong id="heroMemory">0 GB</strong>
+            <span>Deployment memory floor</span>
+          </div>
+          <div class="hero-stat">
+            <strong id="heroCpu">0</strong>
+            <span>Total vCPU</span>
+          </div>
+          <div class="hero-stat">
+            <strong id="heroDisk">0-0 GB</strong>
+            <span>Disk range</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <main class="stack">
+      <nav class="section-nav" aria-label="Section navigation">
+        <a class="nav-link" href="#scenario">Scenario</a>
+        <a class="nav-link" href="#totals">Totals</a>
+        <a class="nav-link" href="#catalog">Node Catalog</a>
+        <a class="nav-link" href="#custom-images">Custom Images</a>
+      </nav>
+
+      <section class="panel" id="scenario">
+        <div class="panel-head">
+          <div>
+            <h2>Scenario</h2>
+            <p>Pick a starter lab or build your own. Resource values are based on the CML sizing data for this calculator.</p>
+          </div>
+          <div class="status" id="saveStatus">State not saved yet</div>
+        </div>
+
+        <div class="control-grid">
+          <div class="field">
+            <label for="scenarioName">Scenario name</label>
+            <input id="scenarioName" type="text" maxlength="80" placeholder="Spring training pod">
+          </div>
+          <div class="field">
+            <label for="concurrentLabs">Concurrent labs</label>
+            <input id="concurrentLabs" type="number" min="1" step="1" value="1">
+          </div>
+          <div class="field">
+            <label for="search">Find node types</label>
+            <input id="search" type="search" placeholder="Search IOSv, SD-WAN, Ubuntu...">
+          </div>
+        </div>
+
+        <div class="panel-head" style="margin-top:18px; margin-bottom:0;">
+          <div>
+            <h3>Starter labs</h3>
+            <p>Preset ideas inspired by common CML sample-lab patterns and community topologies.</p>
+          </div>
+        </div>
+        <div class="preset-bar" id="presetBar" style="margin-top:18px;"></div>
+      </section>
+
+      <section class="panel" id="totals">
+        <div class="panel-head">
+          <div>
+            <h2>Totals</h2>
+            <p>Size one lab, then multiply by concurrent labs to estimate total deployment requirements.</p>
+          </div>
+        </div>
+
+        <div class="summary-grid" id="summaryGrid"></div>
+      </section>
+
+      <section class="panel" id="catalog">
+        <div class="panel-head">
+          <div>
+            <h2>Node catalog</h2>
+            <p>Use the buttons or type counts directly. Unknown disk values stay out of the disk total.</p>
+          </div>
+        </div>
+
+        <div class="catalog" id="catalogGrid"></div>
+      </section>
+
+      <section class="panel" id="custom-images">
+        <div class="panel-head">
+          <div>
+            <h2>Custom images</h2>
+            <p>For images that are not listed in the standard node catalog.</p>
+          </div>
+        </div>
+        <div class="custom-grid" id="customRows"></div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const devices = [
+      { name: "Alpine", category: "Linux", vcpus: 1, memoryMb: 512, diskMinMb: 100, diskMaxMb: 16000 },
+      { name: "ASAv", category: "Security", vcpus: 1, memoryMb: 2000, diskMinMb: 100, diskMaxMb: 8500 },
+      { name: "CAT 8000V", category: "Routing", vcpus: 1, memoryMb: 4000, diskMinMb: 100, diskMaxMb: 8000 },
+      { name: "CAT 9000v Q200", category: "Switching", vcpus: 4, memoryMb: 18000, diskMinMb: 100, diskMaxMb: 16000 },
+      { name: "CAT 9000v UADP", category: "Switching", vcpus: 4, memoryMb: 18000, diskMinMb: 100, diskMaxMb: 16000 },
+      { name: "CoreOS", category: "Linux", vcpus: 2, memoryMb: 2000, diskMinMb: 100, diskMaxMb: 64000 },
+      { name: "CSR1000v", category: "Routing", vcpus: 1, memoryMb: 3000, diskMinMb: 100, diskMaxMb: 8000 },
+      { name: "Desktop", category: "Endpoint", vcpus: 1, memoryMb: 512, diskMinMb: 100, diskMaxMb: 16000 },
+      { name: "IOL", category: "Routing", vcpus: 0, memoryMb: 1000, diskMinMb: 100, diskMaxMb: 2000 },
+      { name: "IOL-L2", category: "Switching", vcpus: 0, memoryMb: 1000, diskMinMb: 100, diskMaxMb: 4000 },
+      { name: "IOS-XRv", category: "Routing", vcpus: 1, memoryMb: 3000, diskMinMb: 100, diskMaxMb: 4000 },
+      { name: "IOS-XRv 9000", category: "Routing", vcpus: 4, memoryMb: 20000, diskMinMb: 5000, diskMaxMb: 64000 },
+      { name: "IOSv", category: "Routing", vcpus: 1, memoryMb: 512, diskMinMb: 100, diskMaxMb: 2000 },
+      { name: "IOSv-L2", category: "Switching", vcpus: 1, memoryMb: 768, diskMinMb: 100, diskMaxMb: 4000 },
+      { name: "NX-OSv", category: "Switching", vcpus: 1, memoryMb: 3000, diskMinMb: 100, diskMaxMb: 4000 },
+      { name: "NX-OSv 9000", category: "Switching", vcpus: 2, memoryMb: 8000, diskMinMb: 2500, diskMaxMb: 10200 },
+      { name: "Catalyst SD-WAN Edge", category: "SD-WAN", vcpus: 2, memoryMb: 5000, diskMinMb: 100, diskMaxMb: 8000 },
+      { name: "Catalyst SD-WAN Controller", category: "SD-WAN", vcpus: 2, memoryMb: 4000, diskMinMb: 100, diskMaxMb: 10500 },
+      { name: "Catalyst SD-WAN Manager", category: "SD-WAN", vcpus: 8, memoryMb: 16000, diskMinMb: 100, diskMaxMb: 277000 },
+      { name: "Catalyst SD-WAN Validator", category: "SD-WAN", vcpus: 2, memoryMb: 4000, diskMinMb: 100, diskMaxMb: 10500 },
+      { name: "Catalyst SD-WAN vEdge", category: "SD-WAN", vcpus: 2, memoryMb: 2000, diskMinMb: 100, diskMaxMb: 10500 },
+      { name: "Server", category: "Utility", vcpus: 1, memoryMb: 128, diskMinMb: 100, diskMaxMb: 16000 },
+      { name: "TRex", category: "Utility", vcpus: 1, memoryMb: 512, diskMinMb: 100, diskMaxMb: 2000 },
+      { name: "Ubuntu", category: "Linux", vcpus: 1, memoryMb: 2000, diskMinMb: 100, diskMaxMb: 64000 },
+      { name: "WAN Emulator", category: "Utility", vcpus: 1, memoryMb: 512, diskMinMb: 100, diskMaxMb: 2000 },
+      { name: "IOS-XE SD-WAN", category: "SD-WAN", vcpus: 1, memoryMb: 3072, diskMinMb: null, diskMaxMb: null },
+      { name: "Firepower FTDv", category: "Security", vcpus: 4, memoryMb: 8192, diskMinMb: null, diskMaxMb: null },
+      { name: "Firepower FMCv", category: "Security", vcpus: 4, memoryMb: 28672, diskMinMb: null, diskMaxMb: null },
+      { name: "CAT9800 Wireless", category: "Wireless", vcpus: 2, memoryMb: 8192, diskMinMb: null, diskMaxMb: null },
+      { name: "vWLC", category: "Wireless", vcpus: 1, memoryMb: 2048, diskMinMb: null, diskMaxMb: null },
+      { name: "A10 vThunder LB", category: "Third-party", vcpus: 4, memoryMb: 4096, diskMinMb: null, diskMaxMb: null },
+      { name: "F5-bigip-ve", category: "Third-party", vcpus: 4, memoryMb: 4096, diskMinMb: null, diskMaxMb: null },
+      { name: "fortigate", category: "Third-party", vcpus: 1, memoryMb: 1024, diskMinMb: null, diskMaxMb: null },
+      { name: "MikroTik-chr", category: "Third-party", vcpus: 1, memoryMb: 64, diskMinMb: null, diskMaxMb: null },
+      { name: "OPNsense Firewall", category: "Third-party", vcpus: 1, memoryMb: 2048, diskMinMb: null, diskMaxMb: null },
+      { name: "Tiny Core Linux", category: "Linux", vcpus: 1, memoryMb: 128, diskMinMb: null, diskMaxMb: null },
+      { name: "Unmanged Switch", category: "Utility", vcpus: 0, memoryMb: 0, diskMinMb: null, diskMaxMb: null }
+    ];
+
+    const presets = [
+      {
+        name: "Branch pod",
+        description: "Routing and campus switching",
+        labs: 4,
+        counts: { "IOSv": 10, "IOSv-L2": 6, "Desktop": 2, "Server": 1 }
+      },
+      {
+        name: "SD-WAN fabric",
+        description: "Controllers plus edges",
+        labs: 2,
+        counts: {
+          "Catalyst SD-WAN Manager": 1,
+          "Catalyst SD-WAN Controller": 2,
+          "Catalyst SD-WAN Validator": 1,
+          "Catalyst SD-WAN Edge": 8
+        }
+      },
+      {
+        name: "Security lab",
+        description: "FMC, FTD, clients",
+        labs: 3,
+        counts: { "Firepower FMCv": 1, "Firepower FTDv": 4, "Desktop": 2, "Ubuntu": 1 }
+      }
+    ];
+
+    const storageKey = "cml-sizing-calculator-v1";
+    const defaultState = {
+      scenarioName: "",
+      concurrentLabs: 1,
+      search: "",
+      counts: Object.fromEntries(devices.map((device) => [device.name, 0])),
+      customImages: Array.from({ length: 3 }, () => ({
+        name: "",
+        count: 0,
+        vcpus: 0,
+        memoryMb: 0,
+        diskMinMb: null,
+        diskMaxMb: null
+      }))
+    };
+
+    let state = loadState();
+    let saveTimer = null;
+
+    const el = {
+      scenarioName: document.getElementById("scenarioName"),
+      concurrentLabs: document.getElementById("concurrentLabs"),
+      search: document.getElementById("search"),
+      presetBar: document.getElementById("presetBar"),
+      summaryGrid: document.getElementById("summaryGrid"),
+      catalog: document.getElementById("catalogGrid"),
+      customRows: document.getElementById("customRows"),
+      saveStatus: document.getElementById("saveStatus"),
+      heroDevices: document.getElementById("heroDevices"),
+      heroMemory: document.getElementById("heroMemory"),
+      heroCpu: document.getElementById("heroCpu"),
+      heroDisk: document.getElementById("heroDisk"),
+      jumpToCatalog: document.getElementById("jumpToCatalog"),
+      shareLink: document.getElementById("shareLink"),
+      resetAll: document.getElementById("resetAll"),
+      catalogPanel: document.getElementById("catalogPanel")
+    };
+
+    el.jumpToCatalog.addEventListener("click", () => {
+      el.catalogPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+
+    el.shareLink.addEventListener("click", copyShareLink);
+    el.resetAll.addEventListener("click", () => {
+      state = structuredClone(defaultState);
+      render(true);
+    });
+
+    el.scenarioName.addEventListener("input", (event) => {
+      state.scenarioName = event.target.value;
+      render();
+    });
+
+    el.concurrentLabs.addEventListener("input", (event) => {
+      state.concurrentLabs = sanitizeWholeNumber(event.target.value, 1);
+      render();
+    });
+
+    el.search.addEventListener("input", (event) => {
+      state.search = event.target.value;
+      render(false);
+    });
+
+    function loadState() {
+      const cloned = structuredClone(defaultState);
+      try {
+        if (location.hash.startsWith("#state=")) {
+          return normalizeState(JSON.parse(decodeState(location.hash.slice(7))));
+        }
+      } catch (error) {
+        console.warn("Unable to parse shared state", error);
+      }
+      try {
+        const saved = localStorage.getItem(storageKey);
+        if (saved) {
+          return normalizeState(JSON.parse(saved));
+        }
+      } catch (error) {
+        console.warn("Unable to parse saved state", error);
+      }
+      return cloned;
+    }
+
+    function normalizeState(candidate) {
+      const normalized = structuredClone(defaultState);
+      if (candidate && typeof candidate === "object") {
+        normalized.scenarioName = String(candidate.scenarioName || "");
+        normalized.concurrentLabs = sanitizeWholeNumber(candidate.concurrentLabs, 1);
+        normalized.search = String(candidate.search || "");
+
+        for (const device of devices) {
+          normalized.counts[device.name] = sanitizeWholeNumber(candidate.counts?.[device.name], 0);
+        }
+
+        normalized.customImages = normalized.customImages.map((row, index) => {
+          const source = candidate.customImages?.[index] || {};
+          return {
+            name: String(source.name || ""),
+            count: sanitizeWholeNumber(source.count, 0),
+            vcpus: sanitizeWholeNumber(source.vcpus, 0),
+            memoryMb: sanitizeWholeNumber(source.memoryMb, 0),
+            diskMinMb: sanitizeNullableNumber(source.diskMinMb),
+            diskMaxMb: sanitizeNullableNumber(source.diskMaxMb)
+          };
+        });
+      }
+      return normalized;
+    }
+
+    function sanitizeWholeNumber(value, fallback) {
+      const number = Number(value);
+      if (!Number.isFinite(number) || number < 0) {
+        return fallback;
+      }
+      return Math.floor(number);
+    }
+
+    function sanitizeNullableNumber(value) {
+      if (value === "" || value === null || value === undefined) {
+        return null;
+      }
+      const number = Number(value);
+      if (!Number.isFinite(number) || number < 0) {
+        return null;
+      }
+      return Math.floor(number);
+    }
+
+    function roundUpGb(mb) {
+      return Math.ceil(mb / 1000);
+    }
+
+    function formatGbFromMb(mb) {
+      return `${roundUpGb(mb).toLocaleString()} GB`;
+    }
+
+    function formatDiskRange(minMb, maxMb) {
+      return `${roundUpGb(minMb).toLocaleString()}-${roundUpGb(maxMb).toLocaleString()} GB`;
+    }
+
+    function buildRows() {
+      const builtin = devices
+        .map((device) => ({
+          ...device,
+          count: state.counts[device.name] || 0,
+          kind: "builtin"
+        }))
+        .filter((device) => device.count > 0);
+
+      const custom = state.customImages
+        .filter((row) => row.count > 0 && row.name.trim())
+        .map((row, index) => ({
+          name: row.name.trim(),
+          category: "Custom",
+          vcpus: row.vcpus,
+          memoryMb: row.memoryMb,
+          diskMinMb: row.diskMinMb,
+          diskMaxMb: row.diskMaxMb,
+          count: row.count,
+          kind: `custom-${index}`
+        }));
+
+      return [...builtin, ...custom];
+    }
+
+    function calculateTotals() {
+      const rows = buildRows();
+      const concurrentLabs = sanitizeWholeNumber(state.concurrentLabs, 1);
+
+      const perLab = rows.reduce((accumulator, row) => {
+        accumulator.totalDevices += row.count;
+        accumulator.memoryMb += row.memoryMb * row.count;
+        accumulator.vcpus += row.vcpus * row.count;
+        if (row.diskMinMb !== null && row.diskMaxMb !== null) {
+          accumulator.diskMinMb += row.diskMinMb * row.count;
+          accumulator.diskMaxMb += row.diskMaxMb * row.count;
+          accumulator.knownDiskRows += 1;
+        } else {
+          accumulator.unknownDiskRows += row.count;
+        }
+        return accumulator;
+      }, {
+        totalDevices: 0,
+        memoryMb: 0,
+        vcpus: 0,
+        diskMinMb: 0,
+        diskMaxMb: 0,
+        knownDiskRows: 0,
+        unknownDiskRows: 0
+      });
+
+      const deployment = {
+        totalDevices: perLab.totalDevices * concurrentLabs,
+        memoryMb: perLab.memoryMb * concurrentLabs,
+        vcpus: perLab.vcpus * concurrentLabs,
+        diskMinMb: perLab.diskMinMb * concurrentLabs,
+        diskMaxMb: perLab.diskMaxMb * concurrentLabs
+      };
+
+      return { rows, concurrentLabs, perLab, deployment };
+    }
+
+    function render(persist = true) {
+      const totals = calculateTotals();
+      renderPresets();
+      renderSummary(totals);
+      renderCatalog();
+      renderCustomRows();
+      syncFields();
+      updateHero(totals);
+      if (persist) {
+        persistState();
+      }
+    }
+
+    function syncFields() {
+      el.scenarioName.value = state.scenarioName;
+      el.concurrentLabs.value = state.concurrentLabs;
+      el.search.value = state.search;
+    }
+
+    function renderPresets() {
+      el.presetBar.innerHTML = presets
+        .map((preset, index) => `
+          <button class="preset" data-preset="${index}">
+            <strong>${escapeHtml(preset.name)}</strong>
+            <span>${escapeHtml(preset.description)}</span>
+          </button>
+        `)
+        .join("");
+
+      for (const button of el.presetBar.querySelectorAll("button")) {
+        button.addEventListener("click", () => {
+          applyPreset(presets[Number(button.dataset.preset)]);
+        });
+      }
+    }
+
+    function applyPreset(preset) {
+      state = structuredClone(defaultState);
+      state.concurrentLabs = preset.labs;
+      state.scenarioName = preset.name;
+      for (const [name, count] of Object.entries(preset.counts)) {
+        if (name in state.counts) {
+          state.counts[name] = count;
+        }
+      }
+      render(true);
+    }
+
+    function renderSummary(totals) {
+      const summaryItems = [
+        { label: "Per-lab devices", value: totals.perLab.totalDevices.toLocaleString(), hint: "Configured for one lab" },
+        { label: "Minimum memory", value: formatGbFromMb(totals.deployment.memoryMb), hint: `${formatGbFromMb(totals.perLab.memoryMb)} per lab` },
+        { label: "Minimum CPU", value: `${Math.ceil(totals.deployment.vcpus).toLocaleString()} vCPU`, hint: `${Math.ceil(totals.perLab.vcpus).toLocaleString()} vCPU per lab` },
+        {
+          label: "Disk range",
+          value: formatDiskRange(totals.deployment.diskMinMb, totals.deployment.diskMaxMb),
+          hint: totals.perLab.unknownDiskRows ? `${totals.perLab.unknownDiskRows.toLocaleString()} nodes have unknown disk values` : "All active nodes have disk values"
+        },
+        { label: "Deployment devices", value: totals.deployment.totalDevices.toLocaleString(), hint: `${totals.concurrentLabs.toLocaleString()} concurrent labs` }
+      ];
+
+      el.summaryGrid.innerHTML = summaryItems
+        .map((item) => `
+          <div class="metric">
+            <span>${item.label}</span>
+            <strong>${item.value}</strong>
+            <span>${item.hint}</span>
+          </div>
+        `)
+        .join("");
+    }
+
+    function renderCatalog() {
+      const search = state.search.trim().toLowerCase();
+      const filtered = devices.filter((device) => {
+        const matchesSearch = !search || `${device.name} ${device.category}`.toLowerCase().includes(search);
+        return matchesSearch;
+      });
+
+      if (!filtered.length) {
+        el.catalog.innerHTML = `<div class="empty">No node types match the current filter.</div>`;
+        return;
+      }
+
+      el.catalog.innerHTML = filtered
+        .map((device) => {
+          const count = state.counts[device.name] || 0;
+          return `
+            <article class="device-card ${count > 0 ? "active" : ""}" data-device="${escapeAttribute(device.name)}">
+              <div class="device-top">
+                <div>
+                  <h3 class="device-name">${escapeHtml(device.name)}</h3>
+                  <div class="status">${escapeHtml(device.category)}</div>
+                </div>
+              </div>
+              <div class="device-meta">
+                <div class="meta-chip">
+                  <strong>${device.vcpus.toLocaleString()} vCPU</strong>
+                  <span>Per instance</span>
+                </div>
+                <div class="meta-chip">
+                  <strong>${device.memoryMb.toLocaleString()} MB</strong>
+                  <span>Memory floor</span>
+                </div>
+                <div class="meta-chip">
+                  <strong>${device.diskMinMb === null ? "Unknown" : `${roundUpGb(device.diskMinMb)} GB`}</strong>
+                  <span>Min disk</span>
+                </div>
+                <div class="meta-chip">
+                  <strong>${device.diskMaxMb === null ? "Unknown" : `${roundUpGb(device.diskMaxMb)} GB`}</strong>
+                  <span>Max disk</span>
+                </div>
+              </div>
+              <div class="stepper">
+                <button type="button" data-action="decrement" data-device="${escapeAttribute(device.name)}">−</button>
+                <input type="number" min="0" step="1" value="${count}" data-action="input" data-device="${escapeAttribute(device.name)}">
+                <button type="button" data-action="increment" data-device="${escapeAttribute(device.name)}">+</button>
+              </div>
+            </article>
+          `;
+        })
+        .join("");
+
+      for (const button of el.catalog.querySelectorAll("button[data-device]")) {
+        button.addEventListener("click", () => {
+          const name = button.dataset.device;
+          const delta = button.dataset.action === "increment" ? 1 : -1;
+          state.counts[name] = Math.max(0, (state.counts[name] || 0) + delta);
+          render();
+        });
+      }
+
+      for (const input of el.catalog.querySelectorAll("input[data-device]")) {
+        input.addEventListener("input", () => {
+          state.counts[input.dataset.device] = sanitizeWholeNumber(input.value, 0);
+          render();
+        });
+      }
+    }
+
+    function renderCustomRows() {
+      el.customRows.innerHTML = `
+        <div class="custom-header" aria-hidden="true">
+          <div>Image name</div>
+          <div>Count</div>
+          <div>vCPU</div>
+          <div>Memory MB</div>
+          <div>Disk min/max MB</div>
+        </div>
+      ` + state.customImages
+        .map((row, index) => `
+          <div class="custom-row">
+            <div class="field">
+              <label for="custom-name-${index}">Image name</label>
+              <input id="custom-name-${index}" data-index="${index}" data-field="name" type="text" maxlength="60" value="${escapeAttribute(row.name)}" placeholder="acme-router-v1">
+            </div>
+            <div class="field">
+              <label for="custom-count-${index}">Count</label>
+              <input id="custom-count-${index}" data-index="${index}" data-field="count" type="number" min="0" step="1" value="${row.count}">
+            </div>
+            <div class="field">
+              <label for="custom-cpu-${index}">vCPU</label>
+              <input id="custom-cpu-${index}" data-index="${index}" data-field="vcpus" type="number" min="0" step="1" value="${row.vcpus}">
+            </div>
+            <div class="field">
+              <label for="custom-memory-${index}">Memory MB</label>
+              <input id="custom-memory-${index}" data-index="${index}" data-field="memoryMb" type="number" min="0" step="1" value="${row.memoryMb}">
+            </div>
+            <div class="field">
+              <label for="custom-disk-${index}">Disk min/max MB</label>
+              <input id="custom-disk-${index}" data-index="${index}" data-field="diskPair" type="text" value="${row.diskMinMb === null && row.diskMaxMb === null ? "" : `${row.diskMinMb ?? ""}/${row.diskMaxMb ?? ""}`}" placeholder="2000/8000">
+            </div>
+          </div>
+        `)
+        .join("");
+
+      for (const input of el.customRows.querySelectorAll("input")) {
+        input.addEventListener("input", () => {
+          const index = Number(input.dataset.index);
+          const field = input.dataset.field;
+          if (field === "name") {
+            state.customImages[index].name = input.value;
+          } else if (field === "diskPair") {
+            const [minValue, maxValue] = input.value.split("/");
+            state.customImages[index].diskMinMb = sanitizeNullableNumber(minValue);
+            state.customImages[index].diskMaxMb = sanitizeNullableNumber(maxValue);
+          } else {
+            state.customImages[index][field] = sanitizeWholeNumber(input.value, 0);
+          }
+          render();
+        });
+      }
+    }
+
+    function updateHero(totals) {
+      el.heroDevices.textContent = totals.deployment.totalDevices.toLocaleString();
+      el.heroMemory.textContent = formatGbFromMb(totals.deployment.memoryMb);
+      el.heroCpu.textContent = `${Math.ceil(totals.deployment.vcpus).toLocaleString()} vCPU`;
+      el.heroDisk.textContent = formatDiskRange(totals.deployment.diskMinMb, totals.deployment.diskMaxMb);
+    }
+
+    function persistState() {
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(state));
+        queueHashUpdate();
+        el.saveStatus.textContent = `Saved locally at ${new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
+      } catch (error) {
+        console.warn("Unable to save state", error);
+        el.saveStatus.textContent = "Unable to persist locally";
+      }
+    }
+
+    function queueHashUpdate() {
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => {
+        try {
+          history.replaceState(null, "", `#state=${encodeState(state)}`);
+        } catch (error) {
+          console.warn("Unable to update hash", error);
+        }
+      }, 180);
+    }
+
+    async function copyShareLink() {
+      const link = `${location.href.split("#")[0]}#state=${encodeState(state)}`;
+      try {
+        await navigator.clipboard.writeText(link);
+        el.saveStatus.textContent = "Share link copied to clipboard";
+      } catch (error) {
+        console.warn("Clipboard write failed", error);
+        el.saveStatus.textContent = "Clipboard blocked; copy the URL directly";
+      }
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    function escapeAttribute(value) {
+      return escapeHtml(value).replaceAll("`", "&#96;");
+    }
+
+    function encodeState(value) {
+      const bytes = new TextEncoder().encode(JSON.stringify(value));
+      let binary = "";
+      for (const byte of bytes) {
+        binary += String.fromCharCode(byte);
+      }
+      return btoa(binary);
+    }
+
+    function decodeState(value) {
+      const binary = atob(value);
+      const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+      return new TextDecoder().decode(bytes);
+    }
+
+    render(false);
+  </script>
+</body>
+</html>
