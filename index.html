@@ -166,8 +166,14 @@
       transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
     }
 
-    .btn:hover {
+    .btn:hover:not(:disabled) {
       transform: translateY(-1px);
+    }
+
+    .btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.54;
+      transform: none;
     }
 
     .btn-primary {
@@ -299,6 +305,26 @@
       color: var(--muted);
       font-size: 0.92rem;
       line-height: 1.55;
+    }
+
+    .import-result {
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      color: var(--muted);
+      background: rgba(255,255,255,0.045);
+      border: 1px solid rgba(255,255,255,0.08);
+      font-size: 0.92rem;
+      line-height: 1.55;
+    }
+
+    .import-result strong {
+      color: var(--text);
+    }
+
+    .import-result ul {
+      margin: 8px 0 0;
+      padding-left: 18px;
     }
 
     .field {
@@ -606,7 +632,7 @@
           </div>
           <div class="field">
             <label for="search">Find node types</label>
-            <input id="search" type="search" placeholder="Search IOSv, SD-WAN, Ubuntu...">
+            <input id="search" type="search" placeholder="Search by node, family, resource, or category...">
           </div>
         </div>
 
@@ -618,6 +644,7 @@
           <button class="btn btn-secondary" id="importTopology" type="button">Import Topology</button>
         </div>
         <div class="import-note">The file is parsed entirely in memory, used only to count recognized node definitions, then discarded immediately.</div>
+        <div class="import-result" id="importResult" hidden></div>
 
         <div class="panel-head" style="margin-top:18px; margin-bottom:0;">
           <div>
@@ -671,7 +698,7 @@
       { name: "CAT 9000v Q200", category: "Switching", vcpus: 4, memoryMb: 12288, diskMinMb: 100, diskMaxMb: 16000 },
       { name: "CAT 9000v UADP", category: "Switching", vcpus: 4, memoryMb: 18432, diskMinMb: 100, diskMaxMb: 16000 },
       { name: "CAT9800 Wireless", category: "Wireless", vcpus: 2, memoryMb: 6144, diskMinMb: null, diskMaxMb: null },
-      { name: "Catalyst Center", category: "Management", vcpus: 32, memoryMb: 262144, diskMinMb: 100000, diskMaxMb: 100000 },
+      { name: "Catalyst Center", category: "Management", vcpus: 32, memoryMb: 262144, diskMinMb: 3000000, diskMaxMb: 3000000 },
       { name: "Catalyst SD-WAN Controller", category: "SD-WAN", vcpus: 2, memoryMb: 4096, diskMinMb: 100, diskMaxMb: 10500 },
       { name: "Catalyst SD-WAN Edge", category: "SD-WAN", vcpus: 2, memoryMb: 5120, diskMinMb: 100, diskMaxMb: 8000 },
       { name: "Catalyst SD-WAN Manager", category: "SD-WAN", vcpus: 8, memoryMb: 32768, diskMinMb: 256000, diskMaxMb: 256000 },
@@ -734,7 +761,7 @@
       { name: "TRex", category: "Utility", vcpus: 1, memoryMb: 512, diskMinMb: 100, diskMaxMb: 2000 },
       { name: "Ubuntu", category: "Linux", vcpus: 1, memoryMb: 2048, diskMinMb: 64000, diskMaxMb: 64000 },
       { name: "UCSPE", category: "Community Contributed", vcpus: 1, memoryMb: 2048, diskMinMb: 20000, diskMaxMb: 20000 },
-      { name: "Unmanged Switch", category: "Utility", vcpus: 0, memoryMb: 0, diskMinMb: null, diskMaxMb: null },
+      { name: "Unmanaged Switch", category: "Utility", vcpus: 0, memoryMb: 0, diskMinMb: null, diskMaxMb: null },
       { name: "vEOS", category: "Community Contributed", vcpus: 2, memoryMb: 2048, diskMinMb: null, diskMaxMb: null },
       { name: "vJunos Router", category: "Community Contributed", vcpus: 4, memoryMb: 6144, diskMinMb: null, diskMaxMb: null },
       { name: "vJunos Switch", category: "Community Contributed", vcpus: 4, memoryMb: 6144, diskMinMb: null, diskMaxMb: null },
@@ -753,6 +780,10 @@
       { name: "WSA", category: "Community Contributed", vcpus: 3, memoryMb: 8192, diskMinMb: null, diskMaxMb: null },
       { name: "XRd", category: "Routing", vcpus: 1, memoryMb: 2048, diskMinMb: 0, diskMaxMb: 0 }
     ];
+
+    const deviceAliases = {
+      "Unmanged Switch": "Unmanaged Switch"
+    };
 
     const topologyNodeMap = {
       "a10vthunder": "A10 vThunder LB",
@@ -820,7 +851,7 @@
       "thousandeyes": "ThousandEyes Agent",
       "ubuntu": "Ubuntu",
       "ucspe": "UCSPE",
-      "unmanaged_switch": "Unmanged Switch",
+      "unmanaged_switch": "Unmanaged Switch",
       "vEOS": "vEOS",
       "vjunos-evolved": "vJunosEvolved",
       "vjunos-router": "vJunos Router",
@@ -887,6 +918,7 @@
     let state = loadState();
     let saveTimer = null;
     let transientImportActive = false;
+    let importReport = null;
 
     const el = {
       scenarioName: document.getElementById("scenarioName"),
@@ -894,6 +926,7 @@
       search: document.getElementById("search"),
       topologyFile: document.getElementById("topologyFile"),
       importTopology: document.getElementById("importTopology"),
+      importResult: document.getElementById("importResult"),
       presetBar: document.getElementById("presetBar"),
       summaryGrid: document.getElementById("summaryGrid"),
       catalog: document.getElementById("catalogGrid"),
@@ -917,23 +950,31 @@
     el.importTopology.addEventListener("click", importTopologyFile);
     el.resetAll.addEventListener("click", () => {
       transientImportActive = false;
+      importReport = null;
       state = structuredClone(defaultState);
       render(true);
     });
 
     el.scenarioName.addEventListener("input", (event) => {
       state.scenarioName = event.target.value;
-      render();
+      persistState();
     });
 
     el.concurrentLabs.addEventListener("input", (event) => {
-      state.concurrentLabs = sanitizeWholeNumber(event.target.value, 1);
-      render();
+      state.concurrentLabs = Math.max(1, sanitizeWholeNumber(event.target.value, 1));
+      refreshCalculatedViews();
+    });
+
+    el.concurrentLabs.addEventListener("blur", () => {
+      state.concurrentLabs = Math.max(1, sanitizeWholeNumber(el.concurrentLabs.value, state.concurrentLabs || 1));
+      el.concurrentLabs.value = state.concurrentLabs;
+      refreshCalculatedViews();
     });
 
     el.search.addEventListener("input", (event) => {
       state.search = event.target.value;
-      render(false);
+      renderCatalog();
+      persistState();
     });
 
     function loadState() {
@@ -960,7 +1001,7 @@
       const normalized = structuredClone(defaultState);
       if (candidate && typeof candidate === "object") {
         normalized.scenarioName = String(candidate.scenarioName || "");
-        normalized.concurrentLabs = sanitizeWholeNumber(candidate.concurrentLabs, 1);
+        normalized.concurrentLabs = Math.max(1, sanitizeWholeNumber(candidate.concurrentLabs, 1));
         normalized.search = String(candidate.search || "");
         normalized.selections = normalizeSelections(candidate.selections, candidate.counts);
 
@@ -981,20 +1022,27 @@
 
     function normalizeSelections(rawSelections, legacyCounts) {
       const names = new Set(devices.map((device) => device.name));
+      const normalizeDeviceName = (name) => deviceAliases[name] || name;
 
       if (Array.isArray(rawSelections)) {
-        return rawSelections
-          .map((row) => ({
-            deviceName: typeof row?.deviceName === "string" && names.has(row.deviceName) ? row.deviceName : "",
-            count: sanitizeWholeNumber(row?.count, 1)
-          }))
+        const rows = rawSelections
+          .map((row) => {
+            const deviceName = typeof row?.deviceName === "string" ? normalizeDeviceName(row.deviceName) : "";
+            return {
+              deviceName: names.has(deviceName) ? deviceName : "",
+              count: sanitizeWholeNumber(row?.count, 1)
+            };
+          })
           .filter((row) => row.deviceName && row.count > 0);
+        return rows.length ? rows : [emptySelectionRow()];
       }
 
       if (legacyCounts && typeof legacyCounts === "object") {
-        return Object.entries(legacyCounts)
+        const rows = Object.entries(legacyCounts)
+          .map(([name, count]) => [normalizeDeviceName(name), count])
           .filter(([name, count]) => names.has(name) && sanitizeWholeNumber(count, 0) > 0)
           .map(([deviceName, count]) => ({ deviceName, count: sanitizeWholeNumber(count, 0) }));
+        return rows.length ? rows : [emptySelectionRow()];
       }
 
       return [emptySelectionRow()];
@@ -1091,16 +1139,22 @@
 
       if (!/\.(yaml|yml)$/i.test(file.name)) {
         el.topologyFile.value = "";
+        importReport = { kind: "error", message: "file must end in .yaml or .yml" };
+        renderImportReport();
         el.saveStatus.textContent = "Import failed: file must end in .yaml or .yml";
         return;
       }
 
       let text = "";
       try {
+        importReport = null;
+        renderImportReport();
         text = await file.text();
         applyTopologyImport(file.name, text);
       } catch (error) {
         console.warn("Topology import failed", error);
+        importReport = { kind: "error", message: error.message };
+        renderImportReport();
         el.saveStatus.textContent = `Import failed: ${error.message}`;
       } finally {
         text = "";
@@ -1115,41 +1169,31 @@
       if (text.includes("\0")) {
         throw new Error("binary data is not supported");
       }
-      if (!/^\s*nodes\s*:/m.test(text)) {
-        throw new Error("missing top-level nodes list");
-      }
-      if (!/^\s*node_definition(?:_id)?\s*:/m.test(text)) {
-        throw new Error("no node_definition entries found");
-      }
 
       const counts = Object.fromEntries(devices.map((device) => [device.name, 0]));
-      const nodeDefinitionMatches = text.matchAll(/^\s*node_definition(?:_id)?\s*:\s*(?:"([^"]+)"|'([^']+)'|([^\s#]+))/gm);
+      const nodeDefinitionIds = extractTopologyNodeDefinitions(text);
+      const unsupportedCounts = {};
+      const ignoredCounts = {};
 
       let recognized = 0;
-      let ignored = 0;
-      let total = 0;
 
-      for (const match of nodeDefinitionMatches) {
-        const rawId = (match[1] || match[2] || match[3] || "").trim();
+      for (const rawId of nodeDefinitionIds) {
         if (!rawId) {
           continue;
         }
-        total += 1;
         if (ignoredTopologyNodeDefinitions.has(rawId)) {
+          incrementCount(ignoredCounts, rawId);
           continue;
         }
         const mappedName = topologyNodeMap[rawId];
         if (!mappedName || !(mappedName in counts)) {
-          ignored += 1;
+          incrementCount(unsupportedCounts, rawId);
           continue;
         }
         counts[mappedName] += 1;
         recognized += 1;
       }
 
-      if (!total) {
-        throw new Error("no nodes found");
-      }
       if (!recognized) {
         throw new Error("no recognized node definitions found");
       }
@@ -1163,10 +1207,90 @@
       if (!state.selections.length) {
         state.selections = [emptySelectionRow()];
       }
+      importReport = {
+        kind: "success",
+        recognized,
+        unsupportedCounts,
+        ignoredCounts
+      };
       render(false);
-      el.saveStatus.textContent = ignored
-        ? `Imported ${recognized} recognized nodes from YAML. ${ignored} unsupported nodes were ignored. Not retained locally.`
+      const unsupportedTotal = countValues(unsupportedCounts);
+      el.saveStatus.textContent = unsupportedTotal
+        ? `Imported ${recognized} recognized nodes from YAML. ${unsupportedTotal} unsupported nodes were ignored. Not retained locally.`
         : `Imported ${recognized} recognized nodes from YAML. Not retained locally.`;
+    }
+
+    function extractTopologyNodeDefinitions(text) {
+      const lines = text.replace(/\r\n?/g, "\n").split("\n");
+      const nodesIndex = lines.findIndex((line) => /^nodes\s*:\s*(?:#.*)?$/.test(line));
+      if (nodesIndex === -1) {
+        throw new Error("missing top-level nodes list");
+      }
+
+      const nodeDefinitionIds = [];
+      let blockScalarIndent = null;
+
+      for (let index = nodesIndex + 1; index < lines.length; index += 1) {
+        const line = lines[index];
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith("#")) {
+          continue;
+        }
+
+        const indent = line.match(/^\s*/)[0].length;
+        if (blockScalarIndent !== null) {
+          if (indent > blockScalarIndent) {
+            continue;
+          }
+          blockScalarIndent = null;
+        }
+
+        if (indent === 0 && /^[A-Za-z_][\w.-]*\s*:/.test(line)) {
+          break;
+        }
+
+        if (/:\s*[>|][+-]?\s*(?:#.*)?$/.test(line)) {
+          blockScalarIndent = indent;
+          continue;
+        }
+
+        const match = line.match(/^\s*(?:-\s*)?node_definition(?:_id)?\s*:\s*(.+?)\s*(?:#.*)?$/);
+        if (match) {
+          const parsed = parseYamlScalar(match[1]);
+          if (parsed) {
+            nodeDefinitionIds.push(parsed);
+          }
+        }
+      }
+
+      if (!nodeDefinitionIds.length) {
+        throw new Error("no node_definition entries found");
+      }
+      return nodeDefinitionIds;
+    }
+
+    function parseYamlScalar(value) {
+      const trimmed = value.trim();
+      if (!trimmed || trimmed === "~" || /^null$/i.test(trimmed)) {
+        return "";
+      }
+      if (trimmed.startsWith('"')) {
+        const match = trimmed.match(/^"((?:\\"|[^"])*)"/);
+        return match ? match[1].replaceAll("\\\"", '"') : "";
+      }
+      if (trimmed.startsWith("'")) {
+        const match = trimmed.match(/^'((?:''|[^'])*)'/);
+        return match ? match[1].replaceAll("''", "'") : "";
+      }
+      return trimmed.split(/\s+/)[0];
+    }
+
+    function incrementCount(counts, key) {
+      counts[key] = (counts[key] || 0) + 1;
+    }
+
+    function countValues(counts) {
+      return Object.values(counts).reduce((sum, value) => sum + value, 0);
     }
 
     function formatGbFromMb(mb) {
@@ -1205,7 +1329,7 @@
 
     function calculateTotals() {
       const rows = buildRows();
-      const concurrentLabs = sanitizeWholeNumber(state.concurrentLabs, 1);
+      const concurrentLabs = Math.max(1, sanitizeWholeNumber(state.concurrentLabs, 1));
 
       const perLab = rows.reduce((accumulator, row) => {
         accumulator.totalDevices += row.count;
@@ -1247,6 +1371,16 @@
       renderCatalog();
       renderCustomRows();
       syncFields();
+      renderImportReport();
+      updateHero(totals);
+      if (persist) {
+        persistState();
+      }
+    }
+
+    function refreshCalculatedViews(persist = true) {
+      const totals = calculateTotals();
+      renderSummary(totals);
       updateHero(totals);
       if (persist) {
         persistState();
@@ -1257,6 +1391,10 @@
       el.scenarioName.value = state.scenarioName;
       el.concurrentLabs.value = state.concurrentLabs;
       el.search.value = state.search;
+      el.shareLink.disabled = transientImportActive;
+      el.shareLink.title = transientImportActive
+        ? "Topology imports are intentionally not shareable because they are not retained locally"
+        : "";
     }
 
     function renderPresets() {
@@ -1278,6 +1416,7 @@
 
     function applyPreset(preset) {
       transientImportActive = false;
+      importReport = null;
       state = structuredClone(defaultState);
       state.concurrentLabs = preset.labs;
       state.scenarioName = preset.name;
@@ -1309,6 +1448,46 @@
         .join("");
     }
 
+    function renderImportReport() {
+      if (!importReport) {
+        el.importResult.hidden = true;
+        el.importResult.textContent = "";
+        return;
+      }
+
+      el.importResult.hidden = false;
+      if (importReport.kind === "error") {
+        el.importResult.innerHTML = `<strong>Import failed:</strong> ${escapeHtml(importReport.message)}`;
+        return;
+      }
+
+      const unsupportedTotal = countValues(importReport.unsupportedCounts);
+      const ignoredTotal = countValues(importReport.ignoredCounts);
+      const parts = [
+        `<strong>Import summary:</strong> ${importReport.recognized.toLocaleString()} recognized nodes applied.`,
+        "Uploaded topology data was discarded after parsing and is not saved locally."
+      ];
+
+      if (unsupportedTotal) {
+        parts.push(`<div>${unsupportedTotal.toLocaleString()} unsupported node definitions were ignored:</div>`);
+        parts.push(formatImportCountList(importReport.unsupportedCounts));
+      }
+
+      if (ignoredTotal) {
+        parts.push(`<div>${ignoredTotal.toLocaleString()} non-sized topology utility nodes were ignored:</div>`);
+        parts.push(formatImportCountList(importReport.ignoredCounts));
+      }
+
+      el.importResult.innerHTML = parts.join("");
+    }
+
+    function formatImportCountList(counts) {
+      return `<ul>${Object.entries(counts)
+        .sort(([left], [right]) => left.localeCompare(right))
+        .map(([name, count]) => `<li>${escapeHtml(name)} (${count.toLocaleString()})</li>`)
+        .join("")}</ul>`;
+    }
+
     function renderCatalog() {
       const search = state.search.trim().toLowerCase();
       const rows = state.selections;
@@ -1325,9 +1504,10 @@
             const device = devices.find((item) => item.name === currentName);
             const options = devices
               .filter((item) => {
-                const matchesSearch = !search || `${item.name} ${item.category}`.toLowerCase().includes(search);
+                const isCurrentSelection = item.name === currentName;
+                const matchesSearch = !search || catalogSearchText(item).includes(search);
                 const takenByOtherRow = item.name !== currentName && selectedElsewhere.includes(item.name);
-                return matchesSearch && !takenByOtherRow;
+                return (isCurrentSelection || matchesSearch) && !takenByOtherRow;
               })
               .map((item) => `<option value="${escapeAttribute(item.name)}" ${item.name === currentName ? "selected" : ""}>${escapeHtml(item.name)} · ${escapeHtml(item.category)}</option>`)
               .join("");
@@ -1376,9 +1556,22 @@
       for (const input of el.catalog.querySelectorAll("input[data-builder-field='count']")) {
         input.addEventListener("input", () => {
           const index = Number(input.dataset.builderIndex);
-          updateSelectionRow(index, {
-            count: Math.max(1, sanitizeWholeNumber(input.value, 1))
-          });
+          const row = state.selections[index];
+          if (!row || input.value === "") {
+            return;
+          }
+          row.count = Math.max(1, sanitizeWholeNumber(input.value, 1));
+          refreshCalculatedViews();
+        });
+        input.addEventListener("blur", () => {
+          const index = Number(input.dataset.builderIndex);
+          const row = state.selections[index];
+          if (!row) {
+            return;
+          }
+          row.count = Math.max(1, sanitizeWholeNumber(input.value, row.count || 1));
+          input.value = row.count;
+          refreshCalculatedViews();
         });
       }
 
@@ -1391,6 +1584,16 @@
           removeSelectionRow(index);
         });
       }
+    }
+
+    function catalogSearchText(device) {
+      return [
+        device.name,
+        device.category,
+        `${device.vcpus} vcpu`,
+        `${device.memoryMb} mb`,
+        device.diskMinMb === null ? "disk unknown" : `${roundUpGb(device.diskMinMb)} ${roundUpGb(device.diskMaxMb)} gb`
+      ].join(" ").toLowerCase();
     }
 
     function renderCustomRows() {
@@ -1442,7 +1645,7 @@
           } else {
             state.customImages[index][field] = sanitizeWholeNumber(input.value, 0);
           }
-          render();
+          refreshCalculatedViews();
         });
       }
     }
@@ -1456,6 +1659,7 @@
 
     function persistState() {
       if (transientImportActive) {
+        el.saveStatus.textContent = "Imported topology state is not retained locally";
         return;
       }
       try {
@@ -1480,13 +1684,38 @@
     }
 
     async function copyShareLink() {
+      if (transientImportActive) {
+        el.saveStatus.textContent = "Imported topology state is not shareable because it is not retained locally";
+        return;
+      }
       const link = `${location.href.split("#")[0]}#state=${encodeState(state)}`;
       try {
         await navigator.clipboard.writeText(link);
         el.saveStatus.textContent = "Share link copied to clipboard";
       } catch (error) {
         console.warn("Clipboard write failed", error);
-        el.saveStatus.textContent = "Clipboard blocked; copy the URL directly";
+        const copiedWithFallback = copyTextWithFallback(link);
+        el.saveStatus.textContent = copiedWithFallback
+          ? "Share link copied to clipboard"
+          : `Clipboard blocked; share link: ${link}`;
+      }
+    }
+
+    function copyTextWithFallback(value) {
+      const textarea = document.createElement("textarea");
+      textarea.value = value;
+      textarea.setAttribute("readonly", "");
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        return document.execCommand("copy");
+      } catch (error) {
+        console.warn("Fallback clipboard copy failed", error);
+        return false;
+      } finally {
+        textarea.remove();
       }
     }
 
