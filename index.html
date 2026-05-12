@@ -368,100 +368,77 @@
     }
 
     .catalog {
-      grid-template-columns: repeat(auto-fit, minmax(var(--grid-min), 1fr));
       margin-top: 18px;
     }
 
-    .device-card {
-      position: relative;
+    .builder-actions {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .builder-list {
       display: grid;
       gap: 14px;
-      padding: 18px;
-      border-radius: 22px;
-      border: 1px solid rgba(255,255,255,0.08);
-      background:
-        linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.03)),
-        rgba(7, 17, 29, 0.58);
-      transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
     }
 
-    .device-card:hover {
-      transform: translateY(-3px);
-      border-color: rgba(114, 242, 220, 0.22);
-    }
-
-    .device-card.active {
-      border-color: rgba(114, 242, 220, 0.36);
-      background:
-        linear-gradient(180deg, rgba(114, 242, 220, 0.09), rgba(255,255,255,0.03)),
-        rgba(7, 17, 29, 0.7);
-    }
-
-    .device-top {
-      display: flex;
-      justify-content: space-between;
-      gap: 16px;
-      align-items: start;
-    }
-
-    .device-name {
-      font-size: 1.18rem;
-    }
-
-    .device-meta {
+    .builder-row {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
+      grid-template-columns: minmax(220px, 1.8fr) 120px minmax(220px, 1.3fr) 48px;
+      gap: 12px;
+      align-items: end;
+      padding: 16px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.04);
     }
 
-    .meta-chip {
-      padding: 12px;
+    .builder-row select,
+    .builder-row input {
+      min-height: 50px;
+      width: 100%;
+      padding: 0 14px;
       border-radius: 14px;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.05);
+      outline: none;
     }
 
-    .meta-chip strong {
-      display: block;
-      font-size: 0.88rem;
+    .builder-row select:focus,
+    .builder-row input:focus {
+      border-color: rgba(114, 242, 220, 0.5);
+      box-shadow: 0 0 0 4px rgba(114, 242, 220, 0.1);
     }
 
-    .meta-chip span {
-      display: block;
-      margin-top: 6px;
-      color: var(--muted);
-      font-size: 0.86rem;
-    }
-
-    .stepper {
+    .builder-meta {
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      padding: 10px;
-      border-radius: 16px;
+      flex-wrap: wrap;
+      gap: 8px;
+      min-height: 50px;
+      align-content: center;
+      padding: 8px 0;
+    }
+
+    .meta-pill {
+      padding: 8px 10px;
+      border-radius: 999px;
       background: rgba(255,255,255,0.05);
       border: 1px solid rgba(255,255,255,0.08);
+      color: var(--muted);
+      font-size: 0.84rem;
+      white-space: nowrap;
     }
 
-    .stepper button {
-      width: 38px;
-      height: 38px;
+    .builder-remove {
+      width: 48px;
+      height: 48px;
       color: var(--text);
-      border-radius: 12px;
+      border-radius: 14px;
       background: rgba(255,255,255,0.08);
-    }
-
-    .stepper input {
-      width: 88px;
-      min-height: 38px;
-      text-align: center;
-      color: var(--text);
-      border: 0;
-      background: transparent;
-      font-size: 1.05rem;
-      font-weight: 600;
-      outline: none;
+      border: 1px solid rgba(255,255,255,0.08);
     }
 
     .custom-grid {
@@ -540,12 +517,15 @@
       }
 
       .hero-stats,
-      .summary-grid,
-      .catalog {
+      .summary-grid {
         grid-template-columns: 1fr;
       }
 
       .import-row {
+        grid-template-columns: 1fr;
+      }
+
+      .builder-row {
         grid-template-columns: 1fr;
       }
 
@@ -663,7 +643,7 @@
         <div class="panel-head">
           <div>
             <h2>Node catalog</h2>
-            <p>Use the buttons or type counts directly. Unknown disk values stay out of the disk total.</p>
+            <p>Build your lab as a short list of selected node types. Unknown disk values stay out of the disk total.</p>
           </div>
         </div>
 
@@ -888,11 +868,12 @@
     ];
 
     const storageKey = "cml-sizing-calculator-v1";
+    const emptySelectionRow = () => ({ deviceName: "", count: 1 });
     const defaultState = {
       scenarioName: "",
       concurrentLabs: 1,
       search: "",
-      counts: Object.fromEntries(devices.map((device) => [device.name, 0])),
+      selections: [emptySelectionRow()],
       customImages: Array.from({ length: 3 }, () => ({
         name: "",
         count: 0,
@@ -981,10 +962,7 @@
         normalized.scenarioName = String(candidate.scenarioName || "");
         normalized.concurrentLabs = sanitizeWholeNumber(candidate.concurrentLabs, 1);
         normalized.search = String(candidate.search || "");
-
-        for (const device of devices) {
-          normalized.counts[device.name] = sanitizeWholeNumber(candidate.counts?.[device.name], 0);
-        }
+        normalized.selections = normalizeSelections(candidate.selections, candidate.counts);
 
         normalized.customImages = normalized.customImages.map((row, index) => {
           const source = candidate.customImages?.[index] || {};
@@ -999,6 +977,73 @@
         });
       }
       return normalized;
+    }
+
+    function normalizeSelections(rawSelections, legacyCounts) {
+      const names = new Set(devices.map((device) => device.name));
+
+      if (Array.isArray(rawSelections)) {
+        return rawSelections
+          .map((row) => ({
+            deviceName: typeof row?.deviceName === "string" && names.has(row.deviceName) ? row.deviceName : "",
+            count: sanitizeWholeNumber(row?.count, 1)
+          }))
+          .filter((row) => row.deviceName && row.count > 0);
+      }
+
+      if (legacyCounts && typeof legacyCounts === "object") {
+        return Object.entries(legacyCounts)
+          .filter(([name, count]) => names.has(name) && sanitizeWholeNumber(count, 0) > 0)
+          .map(([deviceName, count]) => ({ deviceName, count: sanitizeWholeNumber(count, 0) }));
+      }
+
+      return [emptySelectionRow()];
+    }
+
+    function getCountsFromSelections(selections = state.selections) {
+      const counts = Object.fromEntries(devices.map((device) => [device.name, 0]));
+      for (const row of selections) {
+        if (!row.deviceName || !(row.deviceName in counts)) {
+          continue;
+        }
+        counts[row.deviceName] += sanitizeWholeNumber(row.count, 0);
+      }
+      return counts;
+    }
+
+    function getSelectionRowsForImport(counts) {
+      return Object.entries(counts)
+        .filter(([, count]) => count > 0)
+        .sort(([left], [right]) => left.localeCompare(right))
+        .map(([deviceName, count]) => ({ deviceName, count }));
+    }
+
+    function addSelectionRow(prefill = "") {
+      state.selections.push({
+        deviceName: prefill,
+        count: 1
+      });
+      render();
+    }
+
+    function updateSelectionRow(index, patch) {
+      const current = state.selections[index];
+      if (!current) {
+        return;
+      }
+      state.selections[index] = { ...current, ...patch };
+      if (!state.selections[index].deviceName) {
+        state.selections[index].count = 1;
+      }
+      render();
+    }
+
+    function removeSelectionRow(index) {
+      state.selections.splice(index, 1);
+      if (!state.selections.length) {
+        state.selections = [emptySelectionRow()];
+      }
+      render();
     }
 
     function sanitizeWholeNumber(value, fallback) {
@@ -1114,7 +1159,10 @@
       state = structuredClone(defaultState);
       state.scenarioName = filename.replace(/\.(yaml|yml)$/i, "");
       state.concurrentLabs = 1;
-      state.counts = counts;
+      state.selections = getSelectionRowsForImport(counts);
+      if (!state.selections.length) {
+        state.selections = [emptySelectionRow()];
+      }
       render(false);
       el.saveStatus.textContent = ignored
         ? `Imported ${recognized} recognized nodes from YAML. ${ignored} unsupported nodes were ignored. Not retained locally.`
@@ -1130,10 +1178,11 @@
     }
 
     function buildRows() {
+      const counts = getCountsFromSelections();
       const builtin = devices
         .map((device) => ({
           ...device,
-          count: state.counts[device.name] || 0,
+          count: counts[device.name] || 0,
           kind: "builtin"
         }))
         .filter((device) => device.count > 0);
@@ -1232,11 +1281,7 @@
       state = structuredClone(defaultState);
       state.concurrentLabs = preset.labs;
       state.scenarioName = preset.name;
-      for (const [name, count] of Object.entries(preset.counts)) {
-        if (name in state.counts) {
-          state.counts[name] = count;
-        }
-      }
+      state.selections = getSelectionRowsForImport(preset.counts);
       render(true);
     }
 
@@ -1266,68 +1311,84 @@
 
     function renderCatalog() {
       const search = state.search.trim().toLowerCase();
-      const filtered = devices.filter((device) => {
-        const matchesSearch = !search || `${device.name} ${device.category}`.toLowerCase().includes(search);
-        return matchesSearch;
-      });
+      const rows = state.selections;
+      const selectedElsewhere = state.selections.map((row) => row.deviceName);
 
-      if (!filtered.length) {
-        el.catalog.innerHTML = `<div class="empty">No node types match the current filter.</div>`;
-        return;
+      el.catalog.innerHTML = `
+        <div class="builder-actions">
+          <div class="status">Add only the node types you need for this lab.</div>
+          <button class="btn btn-secondary" id="addCatalogRow" type="button">Add Row</button>
+        </div>
+        <div class="builder-list">
+          ${rows.map((row, index) => {
+            const currentName = row.deviceName || "";
+            const device = devices.find((item) => item.name === currentName);
+            const options = devices
+              .filter((item) => {
+                const matchesSearch = !search || `${item.name} ${item.category}`.toLowerCase().includes(search);
+                const takenByOtherRow = item.name !== currentName && selectedElsewhere.includes(item.name);
+                return matchesSearch && !takenByOtherRow;
+              })
+              .map((item) => `<option value="${escapeAttribute(item.name)}" ${item.name === currentName ? "selected" : ""}>${escapeHtml(item.name)} · ${escapeHtml(item.category)}</option>`)
+              .join("");
+
+            return `
+              <div class="builder-row">
+                <div class="field">
+                  <label for="builder-device-${index}">Node type</label>
+                  <select id="builder-device-${index}" data-builder-index="${index}" data-builder-field="deviceName">
+                    <option value="">Select a node type</option>
+                    ${options}
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="builder-count-${index}">Count</label>
+                  <input id="builder-count-${index}" data-builder-index="${index}" data-builder-field="count" type="number" min="1" step="1" value="${row.count}">
+                </div>
+                <div class="builder-meta">
+                  ${device ? `
+                    <span class="meta-pill">${device.vcpus.toLocaleString()} vCPU</span>
+                    <span class="meta-pill">${device.memoryMb.toLocaleString()} MB</span>
+                    <span class="meta-pill">${device.diskMinMb === null ? "Disk unknown" : `Disk ${roundUpGb(device.diskMinMb)}-${roundUpGb(device.diskMaxMb)} GB`}</span>
+                  ` : `<span class="meta-pill">Choose a node type to size this row</span>`}
+                </div>
+                <button class="builder-remove" type="button" data-builder-remove="${index}" aria-label="Remove row">×</button>
+              </div>
+            `;
+          }).join("")}
+        </div>
+      `;
+
+      const addRowButton = document.getElementById("addCatalogRow");
+      if (addRowButton) {
+        addRowButton.addEventListener("click", () => addSelectionRow());
       }
 
-      el.catalog.innerHTML = filtered
-        .map((device) => {
-          const count = state.counts[device.name] || 0;
-          return `
-            <article class="device-card ${count > 0 ? "active" : ""}" data-device="${escapeAttribute(device.name)}">
-              <div class="device-top">
-                <div>
-                  <h3 class="device-name">${escapeHtml(device.name)}</h3>
-                  <div class="status">${escapeHtml(device.category)}</div>
-                </div>
-              </div>
-              <div class="device-meta">
-                <div class="meta-chip">
-                  <strong>${device.vcpus.toLocaleString()} vCPU</strong>
-                  <span>Per instance</span>
-                </div>
-                <div class="meta-chip">
-                  <strong>${device.memoryMb.toLocaleString()} MB</strong>
-                  <span>Memory floor</span>
-                </div>
-                <div class="meta-chip">
-                  <strong>${device.diskMinMb === null ? "Unknown" : `${roundUpGb(device.diskMinMb)} GB`}</strong>
-                  <span>Min disk</span>
-                </div>
-                <div class="meta-chip">
-                  <strong>${device.diskMaxMb === null ? "Unknown" : `${roundUpGb(device.diskMaxMb)} GB`}</strong>
-                  <span>Max disk</span>
-                </div>
-              </div>
-              <div class="stepper">
-                <button type="button" data-action="decrement" data-device="${escapeAttribute(device.name)}">−</button>
-                <input type="number" min="0" step="1" value="${count}" data-action="input" data-device="${escapeAttribute(device.name)}">
-                <button type="button" data-action="increment" data-device="${escapeAttribute(device.name)}">+</button>
-              </div>
-            </article>
-          `;
-        })
-        .join("");
-
-      for (const button of el.catalog.querySelectorAll("button[data-device]")) {
-        button.addEventListener("click", () => {
-          const name = button.dataset.device;
-          const delta = button.dataset.action === "increment" ? 1 : -1;
-          state.counts[name] = Math.max(0, (state.counts[name] || 0) + delta);
-          render();
+      for (const select of el.catalog.querySelectorAll("select[data-builder-field='deviceName']")) {
+        select.addEventListener("change", () => {
+          updateSelectionRow(Number(select.dataset.builderIndex), {
+            deviceName: select.value,
+            count: select.value ? sanitizeWholeNumber(state.selections[Number(select.dataset.builderIndex)]?.count, 1) : 1
+          });
         });
       }
 
-      for (const input of el.catalog.querySelectorAll("input[data-device]")) {
+      for (const input of el.catalog.querySelectorAll("input[data-builder-field='count']")) {
         input.addEventListener("input", () => {
-          state.counts[input.dataset.device] = sanitizeWholeNumber(input.value, 0);
-          render();
+          const index = Number(input.dataset.builderIndex);
+          updateSelectionRow(index, {
+            count: Math.max(1, sanitizeWholeNumber(input.value, 1))
+          });
+        });
+      }
+
+      for (const button of el.catalog.querySelectorAll("button[data-builder-remove]")) {
+        button.addEventListener("click", () => {
+          const index = Number(button.dataset.builderRemove);
+          if (!state.selections.length) {
+            return;
+          }
+          removeSelectionRow(index);
         });
       }
     }
