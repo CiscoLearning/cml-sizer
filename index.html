@@ -286,6 +286,21 @@
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     }
 
+    .import-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: end;
+      margin-top: 18px;
+    }
+
+    .import-note {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.55;
+    }
+
     .field {
       display: grid;
       gap: 8px;
@@ -530,6 +545,10 @@
         grid-template-columns: 1fr;
       }
 
+      .import-row {
+        grid-template-columns: 1fr;
+      }
+
       .custom-row {
         grid-template-columns: 1fr 1fr;
         column-gap: 14px;
@@ -611,6 +630,15 @@
           </div>
         </div>
 
+        <div class="import-row">
+          <div class="field">
+            <label for="topologyFile">Import CML topology YAML</label>
+            <input id="topologyFile" type="file" accept=".yaml,.yml,text/yaml,application/x-yaml">
+          </div>
+          <button class="btn btn-secondary" id="importTopology" type="button">Import Topology</button>
+        </div>
+        <div class="import-note">The file is parsed entirely in memory, used only to count recognized node definitions, then discarded immediately.</div>
+
         <div class="panel-head" style="margin-top:18px; margin-bottom:0;">
           <div>
             <h3>Starter labs</h3>
@@ -656,44 +684,182 @@
 
   <script>
     const devices = [
-      { name: "Alpine", category: "Linux", vcpus: 1, memoryMb: 512, diskMinMb: 100, diskMaxMb: 16000 },
-      { name: "ASAv", category: "Security", vcpus: 1, memoryMb: 2000, diskMinMb: 100, diskMaxMb: 8500 },
-      { name: "CAT 8000V", category: "Routing", vcpus: 1, memoryMb: 4000, diskMinMb: 100, diskMaxMb: 8000 },
-      { name: "CAT 9000v Q200", category: "Switching", vcpus: 4, memoryMb: 18000, diskMinMb: 100, diskMaxMb: 16000 },
-      { name: "CAT 9000v UADP", category: "Switching", vcpus: 4, memoryMb: 18000, diskMinMb: 100, diskMaxMb: 16000 },
+      { name: "Alpine", category: "Linux", vcpus: 1, memoryMb: 512, diskMinMb: 16000, diskMaxMb: 16000 },
+      { name: "ASAv", category: "Security", vcpus: 1, memoryMb: 2048, diskMinMb: 100, diskMaxMb: 8500 },
+      { name: "CAT 8000V", category: "Routing", vcpus: 1, memoryMb: 4096, diskMinMb: 100, diskMaxMb: 8000 },
+      { name: "CAT 9000v Q200", category: "Switching", vcpus: 4, memoryMb: 12288, diskMinMb: 100, diskMaxMb: 16000 },
+      { name: "CAT 9000v UADP", category: "Switching", vcpus: 4, memoryMb: 18432, diskMinMb: 100, diskMaxMb: 16000 },
       { name: "CoreOS", category: "Linux", vcpus: 2, memoryMb: 2000, diskMinMb: 100, diskMaxMb: 64000 },
-      { name: "CSR1000v", category: "Routing", vcpus: 1, memoryMb: 3000, diskMinMb: 100, diskMaxMb: 8000 },
-      { name: "Desktop", category: "Endpoint", vcpus: 1, memoryMb: 512, diskMinMb: 100, diskMaxMb: 16000 },
-      { name: "IOL", category: "Routing", vcpus: 0, memoryMb: 1000, diskMinMb: 100, diskMaxMb: 2000 },
-      { name: "IOL-L2", category: "Switching", vcpus: 0, memoryMb: 1000, diskMinMb: 100, diskMaxMb: 4000 },
+      { name: "CSR1000v", category: "Routing", vcpus: 1, memoryMb: 3072, diskMinMb: 100, diskMaxMb: 8000 },
+      { name: "Desktop", category: "Endpoint", vcpus: 1, memoryMb: 512, diskMinMb: 16000, diskMaxMb: 16000 },
+      { name: "IOL", category: "Routing", vcpus: 1, memoryMb: 1024, diskMinMb: 100, diskMaxMb: 2000 },
+      { name: "IOL-L2", category: "Switching", vcpus: 1, memoryMb: 1024, diskMinMb: 100, diskMaxMb: 4000 },
       { name: "IOS-XRv", category: "Routing", vcpus: 1, memoryMb: 3000, diskMinMb: 100, diskMaxMb: 4000 },
-      { name: "IOS-XRv 9000", category: "Routing", vcpus: 4, memoryMb: 20000, diskMinMb: 5000, diskMaxMb: 64000 },
+      { name: "IOS-XRv 9000", category: "Routing", vcpus: 4, memoryMb: 20480, diskMinMb: 5000, diskMaxMb: 64000 },
       { name: "IOSv", category: "Routing", vcpus: 1, memoryMb: 512, diskMinMb: 100, diskMaxMb: 2000 },
       { name: "IOSv-L2", category: "Switching", vcpus: 1, memoryMb: 768, diskMinMb: 100, diskMaxMb: 4000 },
       { name: "NX-OSv", category: "Switching", vcpus: 1, memoryMb: 3000, diskMinMb: 100, diskMaxMb: 4000 },
-      { name: "NX-OSv 9000", category: "Switching", vcpus: 2, memoryMb: 8000, diskMinMb: 2500, diskMaxMb: 10200 },
-      { name: "Catalyst SD-WAN Edge", category: "SD-WAN", vcpus: 2, memoryMb: 5000, diskMinMb: 100, diskMaxMb: 8000 },
-      { name: "Catalyst SD-WAN Controller", category: "SD-WAN", vcpus: 2, memoryMb: 4000, diskMinMb: 100, diskMaxMb: 10500 },
-      { name: "Catalyst SD-WAN Manager", category: "SD-WAN", vcpus: 8, memoryMb: 16000, diskMinMb: 100, diskMaxMb: 277000 },
-      { name: "Catalyst SD-WAN Validator", category: "SD-WAN", vcpus: 2, memoryMb: 4000, diskMinMb: 100, diskMaxMb: 10500 },
-      { name: "Catalyst SD-WAN vEdge", category: "SD-WAN", vcpus: 2, memoryMb: 2000, diskMinMb: 100, diskMaxMb: 10500 },
-      { name: "Server", category: "Utility", vcpus: 1, memoryMb: 128, diskMinMb: 100, diskMaxMb: 16000 },
+      { name: "NX-OSv 9000", category: "Switching", vcpus: 2, memoryMb: 12288, diskMinMb: 2500, diskMaxMb: 10200 },
+      { name: "Catalyst SD-WAN Edge", category: "SD-WAN", vcpus: 2, memoryMb: 5120, diskMinMb: 100, diskMaxMb: 8000 },
+      { name: "Catalyst SD-WAN Controller", category: "SD-WAN", vcpus: 2, memoryMb: 4096, diskMinMb: 100, diskMaxMb: 10500 },
+      { name: "Wireless AP", category: "Wireless", vcpus: 1, memoryMb: 2048, diskMinMb: 64000, diskMaxMb: 64000 },
+      { name: "Wireless Client", category: "Wireless", vcpus: 1, memoryMb: 2048, diskMinMb: 64000, diskMaxMb: 64000 },
+      { name: "Catalyst SD-WAN Manager", category: "SD-WAN", vcpus: 8, memoryMb: 32768, diskMinMb: 256000, diskMaxMb: 256000 },
+      { name: "Catalyst SD-WAN Validator", category: "SD-WAN", vcpus: 2, memoryMb: 4096, diskMinMb: 100, diskMaxMb: 10500 },
+      { name: "Catalyst SD-WAN vEdge", category: "SD-WAN", vcpus: 2, memoryMb: 2048, diskMinMb: 100, diskMaxMb: 10500 },
+      { name: "XRd", category: "Routing", vcpus: 1, memoryMb: 2048, diskMinMb: 0, diskMaxMb: 0 },
+      { name: "Identity Services Engine (ISE)", category: "Security", vcpus: 16, memoryMb: 16384, diskMinMb: 300000, diskMaxMb: 300000 },
+      { name: "Catalyst Center", category: "Management", vcpus: 32, memoryMb: 262144, diskMinMb: 100000, diskMaxMb: 100000 },
+      { name: "Server", category: "Utility", vcpus: 1, memoryMb: 128, diskMinMb: 16000, diskMaxMb: 16000 },
       { name: "TRex", category: "Utility", vcpus: 1, memoryMb: 512, diskMinMb: 100, diskMaxMb: 2000 },
-      { name: "Ubuntu", category: "Linux", vcpus: 1, memoryMb: 2000, diskMinMb: 100, diskMaxMb: 64000 },
+      { name: "Ubuntu", category: "Linux", vcpus: 1, memoryMb: 2048, diskMinMb: 64000, diskMaxMb: 64000 },
       { name: "WAN Emulator", category: "Utility", vcpus: 1, memoryMb: 512, diskMinMb: 100, diskMaxMb: 2000 },
       { name: "IOS-XE SD-WAN", category: "SD-WAN", vcpus: 1, memoryMb: 3072, diskMinMb: null, diskMaxMb: null },
       { name: "Firepower FTDv", category: "Security", vcpus: 4, memoryMb: 8192, diskMinMb: null, diskMaxMb: null },
-      { name: "Firepower FMCv", category: "Security", vcpus: 4, memoryMb: 28672, diskMinMb: null, diskMaxMb: null },
-      { name: "CAT9800 Wireless", category: "Wireless", vcpus: 2, memoryMb: 8192, diskMinMb: null, diskMaxMb: null },
+      { name: "Firepower FMCv", category: "Security", vcpus: 4, memoryMb: 32768, diskMinMb: 256000, diskMaxMb: 256000 },
+      { name: "CAT9800 Wireless", category: "Wireless", vcpus: 2, memoryMb: 6144, diskMinMb: null, diskMaxMb: null },
       { name: "vWLC", category: "Wireless", vcpus: 1, memoryMb: 2048, diskMinMb: null, diskMaxMb: null },
-      { name: "A10 vThunder LB", category: "Third-party", vcpus: 4, memoryMb: 4096, diskMinMb: null, diskMaxMb: null },
-      { name: "F5-bigip-ve", category: "Third-party", vcpus: 4, memoryMb: 4096, diskMinMb: null, diskMaxMb: null },
-      { name: "fortigate", category: "Third-party", vcpus: 1, memoryMb: 1024, diskMinMb: null, diskMaxMb: null },
-      { name: "MikroTik-chr", category: "Third-party", vcpus: 1, memoryMb: 64, diskMinMb: null, diskMaxMb: null },
-      { name: "OPNsense Firewall", category: "Third-party", vcpus: 1, memoryMb: 2048, diskMinMb: null, diskMaxMb: null },
+      { name: "A10 vThunder LB", category: "Community Contributed", vcpus: 4, memoryMb: 4096, diskMinMb: null, diskMaxMb: null },
+      { name: "F5-bigip-ve", category: "Community Contributed", vcpus: 4, memoryMb: 4096, diskMinMb: null, diskMaxMb: null },
+      { name: "fortigate", category: "Community Contributed", vcpus: 1, memoryMb: 2048, diskMinMb: 32000, diskMaxMb: 32000 },
+      { name: "MikroTik-chr", category: "Community Contributed", vcpus: 1, memoryMb: 1024, diskMinMb: null, diskMaxMb: null },
+      { name: "OPNsense Firewall", category: "Community Contributed", vcpus: 1, memoryMb: 2048, diskMinMb: null, diskMaxMb: null },
       { name: "Tiny Core Linux", category: "Linux", vcpus: 1, memoryMb: 128, diskMinMb: null, diskMaxMb: null },
-      { name: "Unmanged Switch", category: "Utility", vcpus: 0, memoryMb: 0, diskMinMb: null, diskMaxMb: null }
+      { name: "Unmanged Switch", category: "Utility", vcpus: 0, memoryMb: 0, diskMinMb: null, diskMaxMb: null },
+      { name: "Check Point Gaia", category: "Security", vcpus: 4, memoryMb: 6144, diskMinMb: null, diskMaxMb: null },
+      { name: "Code-Server (Python/Terraform)", category: "Community Contributed", vcpus: 1, memoryMb: 4096, diskMinMb: null, diskMaxMb: null },
+      { name: "Cumulus VX", category: "Community Contributed", vcpus: 2, memoryMb: 2048, diskMinMb: null, diskMaxMb: null },
+      { name: "DevNet Expert CWS", category: "Community Contributed", vcpus: 4, memoryMb: 8192, diskMinMb: 1000, diskMaxMb: 1000 },
+      { name: "ESA", category: "Community Contributed", vcpus: 1, memoryMb: 4096, diskMinMb: null, diskMaxMb: null },
+      { name: "EXOS", category: "Community Contributed", vcpus: 1, memoryMb: 512, diskMinMb: null, diskMaxMb: null },
+      { name: "FireboxV", category: "Community Contributed", vcpus: 2, memoryMb: 2048, diskMinMb: 40000, diskMaxMb: 40000 },
+      { name: "FreeBSD", category: "Community Contributed", vcpus: 1, memoryMb: 1024, diskMinMb: null, diskMaxMb: null },
+      { name: "HPE", category: "Community Contributed", vcpus: 2, memoryMb: 4096, diskMinMb: null, diskMaxMb: null },
+      { name: "IOL (4E)", category: "Routing", vcpus: 1, memoryMb: 1024, diskMinMb: null, diskMaxMb: null },
+      { name: "Juniper vMX VCP", category: "Community Contributed", vcpus: 1, memoryMb: 1024, diskMinMb: null, diskMaxMb: null },
+      { name: "Juniper vMX VFP", category: "Community Contributed", vcpus: 3, memoryMb: 4096, diskMinMb: null, diskMaxMb: null },
+      { name: "Juniper vQFX PFE", category: "Community Contributed", vcpus: 1, memoryMb: 2048, diskMinMb: null, diskMaxMb: null },
+      { name: "Juniper vQFX RE", category: "Community Contributed", vcpus: 1, memoryMb: 1024, diskMinMb: null, diskMaxMb: null },
+      { name: "Juniper vSRX 3.0", category: "Community Contributed", vcpus: 2, memoryMb: 4096, diskMinMb: null, diskMaxMb: null },
+      { name: "Meraki vMX", category: "Community Contributed", vcpus: 2, memoryMb: 4096, diskMinMb: null, diskMaxMb: null },
+      { name: "NX-OS 9500-148", category: "Community Contributed", vcpus: 4, memoryMb: 16384, diskMinMb: null, diskMaxMb: null },
+      { name: "NetBox", category: "Community Contributed", vcpus: 1, memoryMb: 2048, diskMinMb: 16000, diskMaxMb: 16000 },
+      { name: "OpenBSD", category: "Community Contributed", vcpus: 1, memoryMb: 1024, diskMinMb: null, diskMaxMb: null },
+      { name: "PAN-OS 10", category: "Community Contributed", vcpus: 2, memoryMb: 4096, diskMinMb: null, diskMaxMb: null },
+      { name: "SONiC Virtual Switch (VM)", category: "Community Contributed", vcpus: 2, memoryMb: 4096, diskMinMb: null, diskMaxMb: null },
+      { name: "UCSPE", category: "Community Contributed", vcpus: 1, memoryMb: 2048, diskMinMb: 20000, diskMaxMb: 20000 },
+      { name: "VOSS", category: "Community Contributed", vcpus: 1, memoryMb: 2048, diskMinMb: null, diskMaxMb: null },
+      { name: "VyOS", category: "Community Contributed", vcpus: 1, memoryMb: 512, diskMinMb: null, diskMaxMb: null },
+      { name: "WSA", category: "Community Contributed", vcpus: 3, memoryMb: 8192, diskMinMb: null, diskMaxMb: null },
+      { name: "Windows 10", category: "Community Contributed", vcpus: 2, memoryMb: 6144, diskMinMb: null, diskMaxMb: null },
+      { name: "Windows 11", category: "Community Contributed", vcpus: 2, memoryMb: 6144, diskMinMb: null, diskMaxMb: null },
+      { name: "Windows Server 2019", category: "Community Contributed", vcpus: 4, memoryMb: 16384, diskMinMb: 64000, diskMaxMb: 64000 },
+      { name: "Windows Server 2022", category: "Community Contributed", vcpus: 4, memoryMb: 16384, diskMinMb: 64000, diskMaxMb: 64000 },
+      { name: "Windows Server 2025", category: "Community Contributed", vcpus: 4, memoryMb: 16384, diskMinMb: 64000, diskMaxMb: 64000 },
+      { name: "vEOS", category: "Community Contributed", vcpus: 2, memoryMb: 2048, diskMinMb: null, diskMaxMb: null },
+      { name: "vJunos Router", category: "Community Contributed", vcpus: 4, memoryMb: 6144, diskMinMb: null, diskMaxMb: null },
+      { name: "vJunos Switch", category: "Community Contributed", vcpus: 4, memoryMb: 6144, diskMinMb: null, diskMaxMb: null },
+      { name: "vJunosEvolved", category: "Community Contributed", vcpus: 4, memoryMb: 8192, diskMinMb: null, diskMaxMb: null },
+      { name: "Chrome", category: "Container", vcpus: 1, memoryMb: 2048, diskMinMb: null, diskMaxMb: null },
+      { name: "Dnsmasq", category: "Container", vcpus: 1, memoryMb: 512, diskMinMb: null, diskMaxMb: null },
+      { name: "Firefox", category: "Container", vcpus: 1, memoryMb: 2048, diskMinMb: null, diskMaxMb: null },
+      { name: "Radius", category: "Container", vcpus: 1, memoryMb: 512, diskMinMb: null, diskMaxMb: null },
+      { name: "FRR", category: "Container", vcpus: 1, memoryMb: 256, diskMinMb: null, diskMaxMb: null },
+      { name: "Net-Tools", category: "Container", vcpus: 1, memoryMb: 512, diskMinMb: null, diskMaxMb: null },
+      { name: "Netflow", category: "Container", vcpus: 1, memoryMb: 512, diskMinMb: null, diskMaxMb: null },
+      { name: "Nginx", category: "Container", vcpus: 1, memoryMb: 256, diskMinMb: null, diskMaxMb: null },
+      { name: "Splunk", category: "Container", vcpus: 1, memoryMb: 4096, diskMinMb: null, diskMaxMb: null },
+      { name: "Syslog", category: "Container", vcpus: 1, memoryMb: 512, diskMinMb: null, diskMaxMb: null },
+      { name: "TacPlus", category: "Container", vcpus: 1, memoryMb: 512, diskMinMb: null, diskMaxMb: null },
+      { name: "ThousandEyes Agent", category: "Container", vcpus: 1, memoryMb: 2048, diskMinMb: null, diskMaxMb: null }
     ];
+
+    const topologyNodeMap = {
+      "a10vthunder": "A10 vThunder LB",
+      "alpine": "Alpine",
+      "alpine-trex": "TRex",
+      "alpine-wanem": "WAN Emulator",
+      "asav": "ASAv",
+      "cat-sdwan-controller": "Catalyst SD-WAN Controller",
+      "cat-sdwan-edge": "Catalyst SD-WAN Edge",
+      "cat-sdwan-manager": "Catalyst SD-WAN Manager",
+      "cat-sdwan-validator": "Catalyst SD-WAN Validator",
+      "cat-sdwan-vedge": "Catalyst SD-WAN vEdge",
+      "cat8000v": "CAT 8000V",
+      "cat9000v-q200": "CAT 9000v Q200",
+      "cat9000v-uadp": "CAT 9000v UADP",
+      "cat9800": "CAT9800 Wireless",
+      "catalyst_center": "Catalyst Center",
+      "chrome": "Chrome",
+      "chr": "MikroTik-chr",
+      "code-server-custom-4.102": "Code-Server (Python/Terraform)",
+      "csr1000v": "CSR1000v",
+      "cumulusvx": "Cumulus VX",
+      "cws": "DevNet Expert CWS",
+      "dnsmasq": "Dnsmasq",
+      "desktop": "Desktop",
+      "exos": "EXOS",
+      "f5-bigip-ve": "F5-bigip-ve",
+      "FireboxV": "FireboxV",
+      "firefox": "Firefox",
+      "fmcv": "Firepower FMCv",
+      "fortigate": "fortigate",
+      "FreeBSD": "FreeBSD",
+      "freeradius": "Radius",
+      "frr": "FRR",
+      "ftdv": "Firepower FTDv",
+      "gaia": "Check Point Gaia",
+      "hpe": "HPE",
+      "iol-xe": "IOL",
+      "iol-xe-serial-4eth": "IOL (4E)",
+      "iosv": "IOSv",
+      "iosvl2": "IOSv-L2",
+      "iosxrv9000": "IOS-XRv 9000",
+      "ise": "Identity Services Engine (ISE)",
+      "ioll2-xe": "IOL-L2",
+      "jnpr-vmx-vcp": "Juniper vMX VCP",
+      "jnpr-vmx-vfp": "Juniper vMX VFP",
+      "jnpr-vqfx-pfe": "Juniper vQFX PFE",
+      "jnpr-vqfx-re": "Juniper vQFX RE",
+      "jnpr-vsrx": "Juniper vSRX 3.0",
+      "meraki-vmx": "Meraki vMX",
+      "net-tools": "Net-Tools",
+      "netbox-server": "NetBox",
+      "netflow": "Netflow",
+      "nginx": "Nginx",
+      "nxosv9000": "NX-OSv 9000",
+      "nxosv9500-148": "NX-OS 9500-148",
+      "OpenBSD": "OpenBSD",
+      "opnsense": "OPNsense Firewall",
+      "panos10": "PAN-OS 10",
+      "server": "Server",
+      "SONiCv": "SONiC Virtual Switch (VM)",
+      "splunk": "Splunk",
+      "syslog": "Syslog",
+      "tacplus": "TacPlus",
+      "thousandeyes": "ThousandEyes Agent",
+      "ubuntu": "Ubuntu",
+      "ucspe": "UCSPE",
+      "unmanaged_switch": "Unmanged Switch",
+      "vEOS": "vEOS",
+      "vjunos-evolved": "vJunosEvolved",
+      "vjunos-router": "vJunos Router",
+      "vjunos-switch": "vJunos Switch",
+      "voss": "VOSS",
+      "vwlc": "vWLC",
+      "VyOS-Router": "VyOS",
+      "wireless-ap": "Wireless AP",
+      "wireless-client": "Wireless Client",
+      "win10": "Windows 10",
+      "win11": "Windows 11",
+      "win2019": "Windows Server 2019",
+      "win2022": "Windows Server 2022",
+      "win2025": "Windows Server 2025",
+      "wsa": "WSA",
+      "xrd": "XRd"
+    };
+
+    const ignoredTopologyNodeDefinitions = new Set(["external_connector"]);
 
     const presets = [
       {
@@ -739,11 +905,14 @@
 
     let state = loadState();
     let saveTimer = null;
+    let transientImportActive = false;
 
     const el = {
       scenarioName: document.getElementById("scenarioName"),
       concurrentLabs: document.getElementById("concurrentLabs"),
       search: document.getElementById("search"),
+      topologyFile: document.getElementById("topologyFile"),
+      importTopology: document.getElementById("importTopology"),
       presetBar: document.getElementById("presetBar"),
       summaryGrid: document.getElementById("summaryGrid"),
       catalog: document.getElementById("catalogGrid"),
@@ -756,7 +925,7 @@
       jumpToCatalog: document.getElementById("jumpToCatalog"),
       shareLink: document.getElementById("shareLink"),
       resetAll: document.getElementById("resetAll"),
-      catalogPanel: document.getElementById("catalogPanel")
+      catalogPanel: document.getElementById("catalog")
     };
 
     el.jumpToCatalog.addEventListener("click", () => {
@@ -764,7 +933,9 @@
     });
 
     el.shareLink.addEventListener("click", copyShareLink);
+    el.importTopology.addEventListener("click", importTopologyFile);
     el.resetAll.addEventListener("click", () => {
+      transientImportActive = false;
       state = structuredClone(defaultState);
       render(true);
     });
@@ -851,6 +1022,103 @@
 
     function roundUpGb(mb) {
       return Math.ceil(mb / 1000);
+    }
+
+    function clearPersistedState() {
+      try {
+        localStorage.removeItem(storageKey);
+      } catch (error) {
+        console.warn("Unable to clear saved state", error);
+      }
+      try {
+        history.replaceState(null, "", location.href.split("#")[0]);
+      } catch (error) {
+        console.warn("Unable to clear shared state", error);
+      }
+    }
+
+    async function importTopologyFile() {
+      const [file] = el.topologyFile.files || [];
+      if (!file) {
+        el.saveStatus.textContent = "Choose a CML topology YAML file first";
+        return;
+      }
+
+      if (!/\.(yaml|yml)$/i.test(file.name)) {
+        el.topologyFile.value = "";
+        el.saveStatus.textContent = "Import failed: file must end in .yaml or .yml";
+        return;
+      }
+
+      let text = "";
+      try {
+        text = await file.text();
+        applyTopologyImport(file.name, text);
+      } catch (error) {
+        console.warn("Topology import failed", error);
+        el.saveStatus.textContent = `Import failed: ${error.message}`;
+      } finally {
+        text = "";
+        el.topologyFile.value = "";
+      }
+    }
+
+    function applyTopologyImport(filename, text) {
+      if (typeof text !== "string" || !text.trim()) {
+        throw new Error("empty file");
+      }
+      if (text.includes("\0")) {
+        throw new Error("binary data is not supported");
+      }
+      if (!/^\s*nodes\s*:/m.test(text)) {
+        throw new Error("missing top-level nodes list");
+      }
+      if (!/^\s*node_definition(?:_id)?\s*:/m.test(text)) {
+        throw new Error("no node_definition entries found");
+      }
+
+      const counts = Object.fromEntries(devices.map((device) => [device.name, 0]));
+      const nodeDefinitionMatches = text.matchAll(/^\s*node_definition(?:_id)?\s*:\s*(?:"([^"]+)"|'([^']+)'|([^\s#]+))/gm);
+
+      let recognized = 0;
+      let ignored = 0;
+      let total = 0;
+
+      for (const match of nodeDefinitionMatches) {
+        const rawId = (match[1] || match[2] || match[3] || "").trim();
+        if (!rawId) {
+          continue;
+        }
+        total += 1;
+        if (ignoredTopologyNodeDefinitions.has(rawId)) {
+          continue;
+        }
+        const mappedName = topologyNodeMap[rawId];
+        if (!mappedName || !(mappedName in counts)) {
+          ignored += 1;
+          continue;
+        }
+        counts[mappedName] += 1;
+        recognized += 1;
+      }
+
+      if (!total) {
+        throw new Error("no nodes found");
+      }
+      if (!recognized) {
+        throw new Error("no recognized node definitions found");
+      }
+
+      transientImportActive = true;
+      clearPersistedState();
+      state = structuredClone(defaultState);
+      state.scenarioName = filename.replace(/\.(yaml|yml)$/i, "");
+      state.concurrentLabs = 1;
+      state.counts = counts;
+      render(false);
+      el.saveStatus.textContent = ignored
+        ? `Imported ${recognized} recognized nodes from YAML. ${ignored} unsupported nodes were ignored. Not retained locally.`
+        : `Imported ${recognized} recognized nodes from YAML. Not retained locally.`;
     }
 
     function formatGbFromMb(mb) {
@@ -960,6 +1228,7 @@
     }
 
     function applyPreset(preset) {
+      transientImportActive = false;
       state = structuredClone(defaultState);
       state.concurrentLabs = preset.labs;
       state.scenarioName = preset.name;
@@ -1125,6 +1394,9 @@
     }
 
     function persistState() {
+      if (transientImportActive) {
+        return;
+      }
       try {
         localStorage.setItem(storageKey, JSON.stringify(state));
         queueHashUpdate();
