@@ -323,6 +323,24 @@
       margin-top: 18px;
     }
 
+    .import-card {
+      margin-top: 18px;
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+    }
+
+    .import-card h3 {
+      margin-bottom: 6px;
+    }
+
+    .import-card p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
     .import-note {
       margin-top: 10px;
       color: var(--muted);
@@ -725,15 +743,19 @@
           </div>
         </div>
 
-        <div class="import-row">
-          <div class="field">
-            <label for="topologyFile">Import CML topology YAML</label>
-            <input id="topologyFile" type="file" accept=".yaml,.yml,text/yaml,application/x-yaml">
+        <div class="import-card" aria-labelledby="topologySizingTitle">
+          <h3 id="topologySizingTitle">Size a specific lab from topology YAML</h3>
+          <p>Upload a CML topology file to populate this calculator with the node counts from that lab. The current scenario will be replaced by sizing for the uploaded topology.</p>
+          <div class="import-row">
+            <div class="field">
+              <label for="topologyFile">Choose the topology YAML for this lab</label>
+              <input id="topologyFile" type="file" accept=".yaml,.yml,text/yaml,application/x-yaml">
+            </div>
+            <button class="btn btn-secondary" id="importTopology" type="button">Size This Lab</button>
           </div>
-          <button class="btn btn-secondary" id="importTopology" type="button">Import Topology</button>
+          <div class="import-note">The file is parsed entirely in memory, used only to size the recognized nodes in this lab, then discarded immediately.</div>
+          <div class="import-result" id="importResult" hidden></div>
         </div>
-        <div class="import-note">The file is parsed entirely in memory, used only to count recognized node definitions, then discarded immediately.</div>
-        <div class="import-result" id="importResult" hidden></div>
 
         <div class="panel-head" style="margin-top:18px; margin-bottom:0;">
           <div>
