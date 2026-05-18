@@ -587,6 +587,19 @@
       font-size: 0.92rem;
     }
 
+    .feedback-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .feedback-actions .btn {
+      display: inline-flex;
+      align-items: center;
+      text-decoration: none;
+    }
+
     @media (prefers-color-scheme: light) {
       :root {
         color-scheme: light;
@@ -717,6 +730,7 @@
         <a class="nav-link" href="#totals">Totals</a>
         <a class="nav-link" href="#catalog">Node Catalog</a>
         <a class="nav-link" href="#custom-images">Custom Images</a>
+        <a class="nav-link" href="#feedback">Feedback</a>
       </nav>
 
       <section class="panel" id="scenario">
@@ -796,6 +810,23 @@
           </div>
         </div>
         <div class="custom-grid" id="customRows"></div>
+      </section>
+
+      <section class="panel" id="feedback">
+        <div class="panel-head">
+          <div>
+            <h2>Feedback</h2>
+            <p>
+              Found a bug, have a sizing suggestion, or want to improve the calculator?
+              Please open an issue or submit a pull request in the GitHub repository.
+            </p>
+          </div>
+        </div>
+        <div class="feedback-actions">
+          <a class="btn btn-primary" href="https://github.com/CiscoLearning/cml-sizer/issues/new" target="_blank" rel="noopener noreferrer">Open an Issue</a>
+          <a class="btn btn-secondary" href="https://github.com/CiscoLearning/cml-sizer/pulls" target="_blank" rel="noopener noreferrer">Submit a Pull Request</a>
+          <a class="btn btn-secondary" href="https://github.com/CiscoLearning/cml-sizer" target="_blank" rel="noopener noreferrer">View on GitHub</a>
+        </div>
       </section>
     </main>
   </div>
