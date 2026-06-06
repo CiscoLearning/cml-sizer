@@ -708,18 +708,18 @@
             <strong id="heroDevices">0</strong>
             <span>Total active nodes</span>
           </div>
-          <div class="hero-stat">
-            <strong id="heroMemory">0 GB</strong>
-            <span>Deployment memory floor</span>
-          </div>
-          <div class="hero-stat">
-            <strong id="heroCpu">0</strong>
-            <span>Total vCPU</span>
-          </div>
-          <div class="hero-stat">
-            <strong id="heroDisk">0-0 GB</strong>
-            <span>Disk range</span>
-          </div>
+            <div class="hero-stat">
+              <strong id="heroMemory">0 GB</strong>
+              <span>Memory minimum / recommended</span>
+            </div>
+            <div class="hero-stat">
+              <strong id="heroCpu">0</strong>
+              <span>CPU minimum / recommended</span>
+            </div>
+            <div class="hero-stat">
+              <strong id="heroDisk">0-0 GB</strong>
+              <span>Disk minimum / recommended</span>
+            </div>
         </div>
       </div>
     </section>
@@ -784,7 +784,7 @@
         <div class="panel-head">
           <div>
             <h2>Totals</h2>
-            <p>Size one lab, then multiply by concurrent labs to estimate total deployment requirements.</p>
+            <p>Size one lab, then multiply by concurrent labs to estimate minimum and recommended deployment requirements.</p>
           </div>
         </div>
 
@@ -795,7 +795,7 @@
         <div class="panel-head">
           <div>
             <h2>Node catalog</h2>
-            <p>Build your lab as a short list of selected node types. Unknown disk values stay out of the disk total.</p>
+            <p>Build your lab as a short list of selected node types. Per-node chips show minimum and recommended sizing where spreadsheet oversubscription guidance exists.</p>
           </div>
         </div>
 
@@ -922,6 +922,45 @@
       { name: "WSA", category: "Community Contributed", vcpus: 3, memoryMb: 8192, diskMinMb: null, diskMaxMb: null },
       { name: "XRd", category: "Routing", vcpus: 1, memoryMb: 2048, diskMinMb: 0, diskMaxMb: 0 }
     ];
+
+    const spreadsheetResourceProfiles = {
+      "A10 vThunder LB": { minMemoryFactor: 1, recommendedMemoryFactor: 1, minCpuFactor: 1, recommendedCpuFactor: 1 },
+      "Alpine": { minMemoryFactor: 0.75, recommendedMemoryFactor: 1, minCpuFactor: 1, recommendedCpuFactor: 1 },
+      "ASAv": { minMemoryFactor: 0.75, recommendedMemoryFactor: 1, minCpuFactor: 0.33, recommendedCpuFactor: 0.5 },
+      "CAT 8000V": { minMemoryFactor: 0.75, recommendedMemoryFactor: 1, minCpuFactor: 0.33, recommendedCpuFactor: 0.5 },
+      "CAT 9000v Q200": { noOversubscription: true },
+      "CAT 9000v UADP": { noOversubscription: true },
+      "CAT9800 Wireless": { minMemoryFactor: 1, recommendedMemoryFactor: 1, minCpuFactor: 0.5, recommendedCpuFactor: 1 },
+      "Catalyst SD-WAN Controller": { minMemoryFactor: 1, recommendedMemoryFactor: 1, minCpuFactor: 0.5, recommendedCpuFactor: 1 },
+      "Catalyst SD-WAN Edge": { minMemoryFactor: 1, recommendedMemoryFactor: 1, minCpuFactor: 0.5, recommendedCpuFactor: 1 },
+      "Catalyst SD-WAN Manager": { minMemoryFactor: 1, recommendedMemoryFactor: 1, minCpuFactor: 0.5, recommendedCpuFactor: 1 },
+      "Catalyst SD-WAN Validator": { minMemoryFactor: 1, recommendedMemoryFactor: 1, minCpuFactor: 0.5, recommendedCpuFactor: 1 },
+      "Catalyst SD-WAN vEdge": { minMemoryFactor: 1, recommendedMemoryFactor: 1, minCpuFactor: 0.5, recommendedCpuFactor: 1 },
+      "Desktop": { minMemoryFactor: 0.75, recommendedMemoryFactor: 1, minCpuFactor: 1, recommendedCpuFactor: 1 },
+      "F5-bigip-ve": { minMemoryFactor: 1, recommendedMemoryFactor: 1, minCpuFactor: 1, recommendedCpuFactor: 1 },
+      "Firepower FMCv": { minMemoryFactor: 1, recommendedMemoryFactor: 1, minCpuFactor: 0.5, recommendedCpuFactor: 1 },
+      "Firepower FTDv": { minMemoryFactor: 1, recommendedMemoryFactor: 1, minCpuFactor: 0.5, recommendedCpuFactor: 1 },
+      "fortigate": { minMemoryFactor: 0.75, recommendedMemoryFactor: 1, minCpuFactor: 1, recommendedCpuFactor: 1 },
+      "IOL": { minMemoryFactor: 1, recommendedMemoryFactor: 1, minVcpus: 0, recommendedCpuFactor: 1 },
+      "IOL-L2": { minMemoryFactor: 1, recommendedMemoryFactor: 1, minVcpus: 0, recommendedCpuFactor: 1 },
+      "IOS-XE SD-WAN": { minMemoryFactor: 0.75, recommendedMemoryFactor: 1, minCpuFactor: 0.33, recommendedCpuFactor: 0.5 },
+      "IOS-XRv": { minMemoryFactor: 0.75, recommendedMemoryFactor: 1, minCpuFactor: 0.33, recommendedCpuFactor: 0.5 },
+      "IOS-XRv 9000": { noOversubscription: true },
+      "IOSv": { minMemoryFactor: 0.75, recommendedMemoryFactor: 1, minCpuFactor: 0.25, recommendedCpuFactor: 0.4 },
+      "IOSv-L2": { minMemoryFactor: 0.75, recommendedMemoryFactor: 1, minCpuFactor: 0.33, recommendedCpuFactor: 0.5 },
+      "MikroTik-chr": { minMemoryFactor: 0.75, recommendedMemoryFactor: 1, minCpuFactor: 1, recommendedCpuFactor: 1 },
+      "NX-OSv": { minMemoryFactor: 0.75, recommendedMemoryFactor: 1, minCpuFactor: 0.33, recommendedCpuFactor: 0.5 },
+      "NX-OSv 9000": { noOversubscription: true },
+      "OPNsense Firewall": { minMemoryFactor: 0.75, recommendedMemoryFactor: 1, minCpuFactor: 1, recommendedCpuFactor: 1 },
+      "Tiny Core Linux": { minMemoryFactor: 0.75, recommendedMemoryFactor: 1, minCpuFactor: 1, recommendedCpuFactor: 1 },
+      "TRex": { minMemoryFactor: 0.75, recommendedMemoryFactor: 1, minCpuFactor: 1, recommendedCpuFactor: 1 },
+      "Ubuntu": { minMemoryFactor: 0.75, recommendedMemoryFactor: 1, minCpuFactor: 1, recommendedCpuFactor: 1 },
+      "Unmanaged Switch": { minMemoryFactor: 1, recommendedMemoryFactor: 1, minCpuFactor: 1, recommendedCpuFactor: 1 },
+      "vWLC": { minMemoryFactor: 0.75, recommendedMemoryFactor: 1, minCpuFactor: 0.25, recommendedCpuFactor: 0.5 },
+      "WAN Emulator": { minMemoryFactor: 0.75, recommendedMemoryFactor: 1, minCpuFactor: 1, recommendedCpuFactor: 1 }
+    };
+
+    applyResourceProfiles(devices);
 
     const deviceAliases = {
       "Unmanged Switch": "Unmanaged Switch"
@@ -1259,6 +1298,33 @@
       return Math.ceil(mb / 1000);
     }
 
+    function applyResourceProfiles(deviceList) {
+      for (const device of deviceList) {
+        const profile = spreadsheetResourceProfiles[device.name] || {};
+        const recommendedMemoryFactor = profile.noOversubscription ? 1 : profile.recommendedMemoryFactor ?? 1;
+        const minMemoryFactor = profile.noOversubscription ? 1 : profile.minMemoryFactor ?? 1;
+        const recommendedCpuFactor = profile.noOversubscription ? 1 : profile.recommendedCpuFactor ?? 1;
+        const minCpuFactor = profile.noOversubscription ? 1 : profile.minCpuFactor ?? 1;
+
+        device.recommendedMemoryMb = Math.ceil(device.memoryMb * recommendedMemoryFactor);
+        device.minMemoryMb = profile.minMemoryMb ?? Math.ceil(device.memoryMb * minMemoryFactor);
+        device.recommendedVcpus = profile.recommendedVcpus ?? roundCpu(device.vcpus * recommendedCpuFactor);
+        device.minVcpus = profile.minVcpus ?? roundCpu(device.vcpus * minCpuFactor);
+        device.recommendedDiskMb = device.diskMaxMb;
+        device.minDiskMb = profile.noOversubscription ? device.diskMaxMb : device.diskMinMb;
+        device.oversubscriptionSupported =
+          Boolean(spreadsheetResourceProfiles[device.name]) &&
+          !profile.noOversubscription &&
+          (device.minMemoryMb < device.recommendedMemoryMb ||
+            device.minVcpus < device.recommendedVcpus ||
+            (device.minDiskMb !== null && device.recommendedDiskMb !== null && device.minDiskMb < device.recommendedDiskMb));
+      }
+    }
+
+    function roundCpu(value) {
+      return Math.round(value * 100) / 100;
+    }
+
     function clearPersistedState() {
       try {
         localStorage.removeItem(storageKey);
@@ -1435,12 +1501,43 @@
       return Object.values(counts).reduce((sum, value) => sum + value, 0);
     }
 
-    function formatGbFromMb(mb) {
-      return `${roundUpGb(mb).toLocaleString()} GB`;
+    function formatGbRange(minMb, recommendedMb) {
+      const minGb = roundUpGb(minMb);
+      const recommendedGb = roundUpGb(recommendedMb);
+      if (minGb === recommendedGb) {
+        return `${recommendedGb.toLocaleString()} GB`;
+      }
+      return `${minGb.toLocaleString()}-${recommendedGb.toLocaleString()} GB`;
     }
 
-    function formatDiskRange(minMb, maxMb) {
-      return `${roundUpGb(minMb).toLocaleString()}-${roundUpGb(maxMb).toLocaleString()} GB`;
+    function formatMbRange(minMb, recommendedMb) {
+      const min = Math.ceil(minMb);
+      const recommended = Math.ceil(recommendedMb);
+      if (min === recommended) {
+        return `${recommended.toLocaleString()} MB`;
+      }
+      return `${min.toLocaleString()}-${recommended.toLocaleString()} MB`;
+    }
+
+    function formatCpuValue(value, roundUp = false) {
+      const formatted = roundUp ? Math.ceil(value) : roundCpu(value);
+      return formatted.toLocaleString(undefined, { maximumFractionDigits: 2 });
+    }
+
+    function formatCpuRange(minVcpus, recommendedVcpus, roundUp = false) {
+      const min = formatCpuValue(minVcpus, roundUp);
+      const recommended = formatCpuValue(recommendedVcpus, roundUp);
+      if (min === recommended) {
+        return `${recommended} vCPU`;
+      }
+      return `${min}-${recommended} vCPU`;
+    }
+
+    function formatDiskRange(minMb, recommendedMb) {
+      if (minMb === null || recommendedMb === null) {
+        return "Disk unknown";
+      }
+      return `${formatGbRange(minMb, recommendedMb)}`;
     }
 
     function buildRows() {
@@ -1460,8 +1557,15 @@
           category: "Custom",
           vcpus: row.vcpus,
           memoryMb: row.memoryMb,
+          minVcpus: row.vcpus,
+          recommendedVcpus: row.vcpus,
+          minMemoryMb: row.memoryMb,
+          recommendedMemoryMb: row.memoryMb,
           diskMinMb: row.diskMinMb,
           diskMaxMb: row.diskMaxMb,
+          minDiskMb: row.diskMinMb,
+          recommendedDiskMb: row.diskMaxMb,
+          oversubscriptionSupported: false,
           count: row.count,
           kind: `custom-${index}`
         }));
@@ -1475,11 +1579,13 @@
 
       const perLab = rows.reduce((accumulator, row) => {
         accumulator.totalDevices += row.count;
-        accumulator.memoryMb += row.memoryMb * row.count;
-        accumulator.vcpus += row.vcpus * row.count;
-        if (row.diskMinMb !== null && row.diskMaxMb !== null) {
-          accumulator.diskMinMb += row.diskMinMb * row.count;
-          accumulator.diskMaxMb += row.diskMaxMb * row.count;
+        accumulator.minimum.memoryMb += row.minMemoryMb * row.count;
+        accumulator.recommended.memoryMb += row.recommendedMemoryMb * row.count;
+        accumulator.minimum.vcpus += row.minVcpus * row.count;
+        accumulator.recommended.vcpus += row.recommendedVcpus * row.count;
+        if (row.minDiskMb !== null && row.recommendedDiskMb !== null) {
+          accumulator.minimum.diskMb += row.minDiskMb * row.count;
+          accumulator.recommended.diskMb += row.recommendedDiskMb * row.count;
           accumulator.knownDiskRows += 1;
         } else {
           accumulator.unknownDiskRows += row.count;
@@ -1487,20 +1593,32 @@
         return accumulator;
       }, {
         totalDevices: 0,
-        memoryMb: 0,
-        vcpus: 0,
-        diskMinMb: 0,
-        diskMaxMb: 0,
+        minimum: {
+          memoryMb: 0,
+          vcpus: 0,
+          diskMb: 0
+        },
+        recommended: {
+          memoryMb: 0,
+          vcpus: 0,
+          diskMb: 0
+        },
         knownDiskRows: 0,
         unknownDiskRows: 0
       });
 
       const deployment = {
         totalDevices: perLab.totalDevices * concurrentLabs,
-        memoryMb: perLab.memoryMb * concurrentLabs,
-        vcpus: perLab.vcpus * concurrentLabs,
-        diskMinMb: perLab.diskMinMb * concurrentLabs,
-        diskMaxMb: perLab.diskMaxMb * concurrentLabs
+        minimum: {
+          memoryMb: perLab.minimum.memoryMb * concurrentLabs,
+          vcpus: perLab.minimum.vcpus * concurrentLabs,
+          diskMb: perLab.minimum.diskMb * concurrentLabs
+        },
+        recommended: {
+          memoryMb: perLab.recommended.memoryMb * concurrentLabs,
+          vcpus: perLab.recommended.vcpus * concurrentLabs,
+          diskMb: perLab.recommended.diskMb * concurrentLabs
+        }
       };
 
       return { rows, concurrentLabs, perLab, deployment };
@@ -1569,11 +1687,19 @@
     function renderSummary(totals) {
       const summaryItems = [
         { label: "Per-lab devices", value: totals.perLab.totalDevices.toLocaleString(), hint: "Configured for one lab" },
-        { label: "Minimum memory", value: formatGbFromMb(totals.deployment.memoryMb), hint: `${formatGbFromMb(totals.perLab.memoryMb)} per lab` },
-        { label: "Minimum CPU", value: `${Math.ceil(totals.deployment.vcpus).toLocaleString()} vCPU`, hint: `${Math.ceil(totals.perLab.vcpus).toLocaleString()} vCPU per lab` },
         {
-          label: "Disk range",
-          value: formatDiskRange(totals.deployment.diskMinMb, totals.deployment.diskMaxMb),
+          label: "Memory",
+          value: formatGbRange(totals.deployment.minimum.memoryMb, totals.deployment.recommended.memoryMb),
+          hint: `${formatGbRange(totals.perLab.minimum.memoryMb, totals.perLab.recommended.memoryMb)} per lab`
+        },
+        {
+          label: "CPU",
+          value: formatCpuRange(totals.deployment.minimum.vcpus, totals.deployment.recommended.vcpus, true),
+          hint: `${formatCpuRange(totals.perLab.minimum.vcpus, totals.perLab.recommended.vcpus, true)} per lab`
+        },
+        {
+          label: "Disk",
+          value: formatGbRange(totals.deployment.minimum.diskMb, totals.deployment.recommended.diskMb),
           hint: totals.perLab.unknownDiskRows ? `${totals.perLab.unknownDiskRows.toLocaleString()} nodes have unknown disk values` : "All active nodes have disk values"
         },
         { label: "Deployment devices", value: totals.deployment.totalDevices.toLocaleString(), hint: `${totals.concurrentLabs.toLocaleString()} concurrent labs` }
@@ -1668,11 +1794,12 @@
                   <input id="builder-count-${index}" data-builder-index="${index}" data-builder-field="count" type="number" min="1" step="1" value="${row.count}">
                 </div>
                 <div class="builder-meta">
-                  ${device ? `
-                    <span class="meta-pill">${device.vcpus.toLocaleString()} vCPU</span>
-                    <span class="meta-pill">${device.memoryMb.toLocaleString()} MB</span>
-                    <span class="meta-pill">${device.diskMinMb === null ? "Disk unknown" : `Disk ${roundUpGb(device.diskMinMb)}-${roundUpGb(device.diskMaxMb)} GB`}</span>
-                  ` : `<span class="meta-pill">Choose a node type to size this row</span>`}
+	                  ${device ? `
+	                    <span class="meta-pill">CPU ${formatCpuRange(device.minVcpus, device.recommendedVcpus)}</span>
+	                    <span class="meta-pill">Memory ${formatMbRange(device.minMemoryMb, device.recommendedMemoryMb)}</span>
+	                    <span class="meta-pill">${formatDiskRange(device.minDiskMb, device.recommendedDiskMb)}</span>
+	                    <span class="meta-pill">${device.oversubscriptionSupported ? "Oversub supported" : "No oversub"}</span>
+	                  ` : `<span class="meta-pill">Choose a node type to size this row</span>`}
                 </div>
                 <button class="builder-remove" type="button" data-builder-remove="${index}" aria-label="Remove row">×</button>
               </div>
@@ -1732,9 +1859,10 @@
       return [
         device.name,
         device.category,
-        `${device.vcpus} vcpu`,
-        `${device.memoryMb} mb`,
-        device.diskMinMb === null ? "disk unknown" : `${roundUpGb(device.diskMinMb)} ${roundUpGb(device.diskMaxMb)} gb`
+        `${device.minVcpus} ${device.recommendedVcpus} vcpu`,
+        `${device.minMemoryMb} ${device.recommendedMemoryMb} mb`,
+        device.minDiskMb === null ? "disk unknown" : `${roundUpGb(device.minDiskMb)} ${roundUpGb(device.recommendedDiskMb)} gb`,
+        device.oversubscriptionSupported ? "oversubscription oversub supported" : "no oversubscription no oversub"
       ].join(" ").toLowerCase();
     }
 
@@ -1794,9 +1922,9 @@
 
     function updateHero(totals) {
       el.heroDevices.textContent = totals.deployment.totalDevices.toLocaleString();
-      el.heroMemory.textContent = formatGbFromMb(totals.deployment.memoryMb);
-      el.heroCpu.textContent = `${Math.ceil(totals.deployment.vcpus).toLocaleString()} vCPU`;
-      el.heroDisk.textContent = formatDiskRange(totals.deployment.diskMinMb, totals.deployment.diskMaxMb);
+      el.heroMemory.textContent = formatGbRange(totals.deployment.minimum.memoryMb, totals.deployment.recommended.memoryMb);
+      el.heroCpu.textContent = formatCpuRange(totals.deployment.minimum.vcpus, totals.deployment.recommended.vcpus, true);
+      el.heroDisk.textContent = formatGbRange(totals.deployment.minimum.diskMb, totals.deployment.recommended.diskMb);
     }
 
     function persistState() {
