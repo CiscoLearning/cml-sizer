@@ -795,7 +795,7 @@
         <div class="panel-head">
           <div>
             <h2>Node catalog</h2>
-            <p>Build your lab as a short list of selected node types. Per-node chips show minimum and recommended sizing where spreadsheet oversubscription guidance exists.</p>
+            <p>Build your lab as a short list of selected node types. Per-node chips show minimum and recommended sizing where oversubscription guidance exists.</p>
           </div>
         </div>
 
@@ -832,97 +832,109 @@
   </div>
 
   <script>
+    // Add or update catalog nodes here. Disk is null, one MB value, or [minimum, recommended].
+    // Example: defineNode("New Router", "Routing", 2, 4096, [100, 8000], ["new-router-id"])
+    // Add known CML node_definition IDs as the optional final array for topology imports.
+    function defineNode(name, category, vcpus, memoryMb, disk = null, topologyIds = []) {
+      const [diskMinMb, diskMaxMb] = Array.isArray(disk) ? disk : [disk, disk];
+      return { name, category, vcpus, memoryMb, diskMinMb, diskMaxMb, topologyIds };
+    }
+
     const devices = [
-      { name: "A10 vThunder LB", category: "Community Contributed", vcpus: 4, memoryMb: 4096, diskMinMb: null, diskMaxMb: null },
-      { name: "Alpine", category: "Linux", vcpus: 1, memoryMb: 512, diskMinMb: 16000, diskMaxMb: 16000 },
-      { name: "ASAv", category: "Security", vcpus: 1, memoryMb: 2048, diskMinMb: 100, diskMaxMb: 8500 },
-      { name: "CAT 8000V", category: "Routing", vcpus: 1, memoryMb: 4096, diskMinMb: 100, diskMaxMb: 8000 },
-      { name: "CAT 9000v Q200", category: "Switching", vcpus: 4, memoryMb: 12288, diskMinMb: 100, diskMaxMb: 16000 },
-      { name: "CAT 9000v UADP", category: "Switching", vcpus: 4, memoryMb: 18432, diskMinMb: 100, diskMaxMb: 16000 },
-      { name: "CAT9800 Wireless", category: "Wireless", vcpus: 2, memoryMb: 6144, diskMinMb: null, diskMaxMb: null },
-      { name: "Catalyst Center", category: "Management", vcpus: 32, memoryMb: 262144, diskMinMb: 3000000, diskMaxMb: 3000000 },
-      { name: "Catalyst SD-WAN Controller", category: "SD-WAN", vcpus: 2, memoryMb: 4096, diskMinMb: 100, diskMaxMb: 10500 },
-      { name: "Catalyst SD-WAN Edge", category: "SD-WAN", vcpus: 2, memoryMb: 5120, diskMinMb: 100, diskMaxMb: 8000 },
-      { name: "Catalyst SD-WAN Manager", category: "SD-WAN", vcpus: 8, memoryMb: 32768, diskMinMb: 256000, diskMaxMb: 256000 },
-      { name: "Catalyst SD-WAN Validator", category: "SD-WAN", vcpus: 2, memoryMb: 4096, diskMinMb: 100, diskMaxMb: 10500 },
-      { name: "Catalyst SD-WAN vEdge", category: "SD-WAN", vcpus: 2, memoryMb: 2048, diskMinMb: 100, diskMaxMb: 10500 },
-      { name: "Check Point Gaia", category: "Security", vcpus: 4, memoryMb: 6144, diskMinMb: null, diskMaxMb: null },
-      { name: "Chrome", category: "Container", vcpus: 1, memoryMb: 2048, diskMinMb: null, diskMaxMb: null },
-      { name: "Code-Server (Python/Terraform)", category: "Community Contributed", vcpus: 1, memoryMb: 4096, diskMinMb: null, diskMaxMb: null },
-      { name: "CoreOS", category: "Linux", vcpus: 2, memoryMb: 2000, diskMinMb: 100, diskMaxMb: 64000 },
-      { name: "CSR1000v", category: "Routing", vcpus: 1, memoryMb: 3072, diskMinMb: 100, diskMaxMb: 8000 },
-      { name: "Cumulus VX", category: "Community Contributed", vcpus: 2, memoryMb: 2048, diskMinMb: null, diskMaxMb: null },
-      { name: "Desktop", category: "Endpoint", vcpus: 1, memoryMb: 512, diskMinMb: 16000, diskMaxMb: 16000 },
-      { name: "DevNet Expert CWS", category: "Community Contributed", vcpus: 4, memoryMb: 8192, diskMinMb: 1000, diskMaxMb: 1000 },
-      { name: "Dnsmasq", category: "Container", vcpus: 1, memoryMb: 512, diskMinMb: null, diskMaxMb: null },
-      { name: "ESA", category: "Community Contributed", vcpus: 1, memoryMb: 4096, diskMinMb: null, diskMaxMb: null },
-      { name: "EXOS", category: "Community Contributed", vcpus: 1, memoryMb: 512, diskMinMb: null, diskMaxMb: null },
-      { name: "F5-bigip-ve", category: "Community Contributed", vcpus: 4, memoryMb: 4096, diskMinMb: null, diskMaxMb: null },
-      { name: "FireboxV", category: "Community Contributed", vcpus: 2, memoryMb: 2048, diskMinMb: 40000, diskMaxMb: 40000 },
-      { name: "Firefox", category: "Container", vcpus: 1, memoryMb: 2048, diskMinMb: null, diskMaxMb: null },
-      { name: "Firepower FMCv", category: "Security", vcpus: 4, memoryMb: 32768, diskMinMb: 256000, diskMaxMb: 256000 },
-      { name: "Firepower FTDv", category: "Security", vcpus: 4, memoryMb: 8192, diskMinMb: null, diskMaxMb: null },
-      { name: "fortigate", category: "Community Contributed", vcpus: 1, memoryMb: 2048, diskMinMb: 32000, diskMaxMb: 32000 },
-      { name: "FreeBSD", category: "Community Contributed", vcpus: 1, memoryMb: 1024, diskMinMb: null, diskMaxMb: null },
-      { name: "FRR", category: "Container", vcpus: 1, memoryMb: 256, diskMinMb: null, diskMaxMb: null },
-      { name: "HPE", category: "Community Contributed", vcpus: 2, memoryMb: 4096, diskMinMb: null, diskMaxMb: null },
-      { name: "Identity Services Engine (ISE)", category: "Security", vcpus: 16, memoryMb: 16384, diskMinMb: 300000, diskMaxMb: 300000 },
-      { name: "IOL", category: "Routing", vcpus: 1, memoryMb: 1024, diskMinMb: 100, diskMaxMb: 2000 },
-      { name: "IOL (4E)", category: "Routing", vcpus: 1, memoryMb: 1024, diskMinMb: null, diskMaxMb: null },
-      { name: "IOL-L2", category: "Switching", vcpus: 1, memoryMb: 1024, diskMinMb: 100, diskMaxMb: 4000 },
-      { name: "IOS-XE SD-WAN", category: "SD-WAN", vcpus: 1, memoryMb: 3072, diskMinMb: null, diskMaxMb: null },
-      { name: "IOS-XRv", category: "Routing", vcpus: 1, memoryMb: 3000, diskMinMb: 100, diskMaxMb: 4000 },
-      { name: "IOS-XRv 9000", category: "Routing", vcpus: 4, memoryMb: 20480, diskMinMb: 5000, diskMaxMb: 64000 },
-      { name: "IOSv", category: "Routing", vcpus: 1, memoryMb: 512, diskMinMb: 100, diskMaxMb: 2000 },
-      { name: "IOSv-L2", category: "Switching", vcpus: 1, memoryMb: 768, diskMinMb: 100, diskMaxMb: 4000 },
-      { name: "Juniper vMX VCP", category: "Community Contributed", vcpus: 1, memoryMb: 1024, diskMinMb: null, diskMaxMb: null },
-      { name: "Juniper vMX VFP", category: "Community Contributed", vcpus: 3, memoryMb: 4096, diskMinMb: null, diskMaxMb: null },
-      { name: "Juniper vQFX PFE", category: "Community Contributed", vcpus: 1, memoryMb: 2048, diskMinMb: null, diskMaxMb: null },
-      { name: "Juniper vQFX RE", category: "Community Contributed", vcpus: 1, memoryMb: 1024, diskMinMb: null, diskMaxMb: null },
-      { name: "Juniper vSRX 3.0", category: "Community Contributed", vcpus: 2, memoryMb: 4096, diskMinMb: null, diskMaxMb: null },
-      { name: "Meraki vMX", category: "Community Contributed", vcpus: 2, memoryMb: 4096, diskMinMb: null, diskMaxMb: null },
-      { name: "MikroTik-chr", category: "Community Contributed", vcpus: 1, memoryMb: 1024, diskMinMb: null, diskMaxMb: null },
-      { name: "Net-Tools", category: "Container", vcpus: 1, memoryMb: 512, diskMinMb: null, diskMaxMb: null },
-      { name: "NetBox", category: "Community Contributed", vcpus: 1, memoryMb: 2048, diskMinMb: 16000, diskMaxMb: 16000 },
-      { name: "Netflow", category: "Container", vcpus: 1, memoryMb: 512, diskMinMb: null, diskMaxMb: null },
-      { name: "Nginx", category: "Container", vcpus: 1, memoryMb: 256, diskMinMb: null, diskMaxMb: null },
-      { name: "NX-OS 9500-148", category: "Community Contributed", vcpus: 4, memoryMb: 16384, diskMinMb: null, diskMaxMb: null },
-      { name: "NX-OSv", category: "Switching", vcpus: 1, memoryMb: 3000, diskMinMb: 100, diskMaxMb: 4000 },
-      { name: "NX-OSv 9000", category: "Switching", vcpus: 2, memoryMb: 12288, diskMinMb: 2500, diskMaxMb: 10200 },
-      { name: "OpenBSD", category: "Community Contributed", vcpus: 1, memoryMb: 1024, diskMinMb: null, diskMaxMb: null },
-      { name: "OPNsense Firewall", category: "Community Contributed", vcpus: 1, memoryMb: 2048, diskMinMb: null, diskMaxMb: null },
-      { name: "PAN-OS 10", category: "Community Contributed", vcpus: 2, memoryMb: 4096, diskMinMb: null, diskMaxMb: null },
-      { name: "Radius", category: "Container", vcpus: 1, memoryMb: 512, diskMinMb: null, diskMaxMb: null },
-      { name: "Server", category: "Utility", vcpus: 1, memoryMb: 128, diskMinMb: 16000, diskMaxMb: 16000 },
-      { name: "SONiC Virtual Switch (VM)", category: "Community Contributed", vcpus: 2, memoryMb: 4096, diskMinMb: null, diskMaxMb: null },
-      { name: "Splunk", category: "Container", vcpus: 1, memoryMb: 4096, diskMinMb: null, diskMaxMb: null },
-      { name: "Syslog", category: "Container", vcpus: 1, memoryMb: 512, diskMinMb: null, diskMaxMb: null },
-      { name: "TacPlus", category: "Container", vcpus: 1, memoryMb: 512, diskMinMb: null, diskMaxMb: null },
-      { name: "ThousandEyes Agent", category: "Container", vcpus: 1, memoryMb: 2048, diskMinMb: null, diskMaxMb: null },
-      { name: "Tiny Core Linux", category: "Linux", vcpus: 1, memoryMb: 128, diskMinMb: null, diskMaxMb: null },
-      { name: "TRex", category: "Utility", vcpus: 1, memoryMb: 512, diskMinMb: 100, diskMaxMb: 2000 },
-      { name: "Ubuntu", category: "Linux", vcpus: 1, memoryMb: 2048, diskMinMb: 64000, diskMaxMb: 64000 },
-      { name: "UCSPE", category: "Community Contributed", vcpus: 1, memoryMb: 2048, diskMinMb: 20000, diskMaxMb: 20000 },
-      { name: "Unmanaged Switch", category: "Utility", vcpus: 0, memoryMb: 0, diskMinMb: null, diskMaxMb: null },
-      { name: "vEOS", category: "Community Contributed", vcpus: 2, memoryMb: 2048, diskMinMb: null, diskMaxMb: null },
-      { name: "vJunos Router", category: "Community Contributed", vcpus: 4, memoryMb: 6144, diskMinMb: null, diskMaxMb: null },
-      { name: "vJunos Switch", category: "Community Contributed", vcpus: 4, memoryMb: 6144, diskMinMb: null, diskMaxMb: null },
-      { name: "vJunosEvolved", category: "Community Contributed", vcpus: 4, memoryMb: 8192, diskMinMb: null, diskMaxMb: null },
-      { name: "VOSS", category: "Community Contributed", vcpus: 1, memoryMb: 2048, diskMinMb: null, diskMaxMb: null },
-      { name: "vWLC", category: "Wireless", vcpus: 1, memoryMb: 2048, diskMinMb: null, diskMaxMb: null },
-      { name: "VyOS", category: "Community Contributed", vcpus: 1, memoryMb: 512, diskMinMb: null, diskMaxMb: null },
-      { name: "WAN Emulator", category: "Utility", vcpus: 1, memoryMb: 512, diskMinMb: 100, diskMaxMb: 2000 },
-      { name: "Windows 10", category: "Community Contributed", vcpus: 2, memoryMb: 6144, diskMinMb: null, diskMaxMb: null },
-      { name: "Windows 11", category: "Community Contributed", vcpus: 2, memoryMb: 6144, diskMinMb: null, diskMaxMb: null },
-      { name: "Windows Server 2019", category: "Community Contributed", vcpus: 4, memoryMb: 16384, diskMinMb: 64000, diskMaxMb: 64000 },
-      { name: "Windows Server 2022", category: "Community Contributed", vcpus: 4, memoryMb: 16384, diskMinMb: 64000, diskMaxMb: 64000 },
-      { name: "Windows Server 2025", category: "Community Contributed", vcpus: 4, memoryMb: 16384, diskMinMb: 64000, diskMaxMb: 64000 },
-      { name: "Wireless AP", category: "Wireless", vcpus: 1, memoryMb: 2048, diskMinMb: 64000, diskMaxMb: 64000 },
-      { name: "Wireless Client", category: "Wireless", vcpus: 1, memoryMb: 2048, diskMinMb: 64000, diskMaxMb: 64000 },
-      { name: "WSA", category: "Community Contributed", vcpus: 3, memoryMb: 8192, diskMinMb: null, diskMaxMb: null },
-      { name: "XRd", category: "Routing", vcpus: 1, memoryMb: 2048, diskMinMb: 0, diskMaxMb: 0 }
+      defineNode("A10 vThunder LB", "Community Contributed", 4, 4096),
+      defineNode("Alpine", "Linux", 1, 512, 16000),
+      defineNode("ASAv", "Security", 1, 2048, [100, 8500]),
+      defineNode("CAT 8000V", "Routing", 1, 4096, [100, 8000]),
+      defineNode("CAT 9000v Q200", "Switching", 4, 12288, [100, 16000]),
+      defineNode("CAT 9000v UADP", "Switching", 4, 18432, [100, 16000]),
+      defineNode("CAT9800 Wireless", "Wireless", 2, 6144),
+      defineNode("Catalyst Center", "Management", 32, 262144, 3000000),
+      defineNode("Catalyst SD-WAN Controller", "SD-WAN", 2, 4096, [100, 10500]),
+      defineNode("Catalyst SD-WAN Edge", "SD-WAN", 2, 5120, [100, 8000]),
+      defineNode("Catalyst SD-WAN Manager", "SD-WAN", 8, 32768, 256000),
+      defineNode("Catalyst SD-WAN Validator", "SD-WAN", 2, 4096, [100, 10500]),
+      defineNode("Catalyst SD-WAN vEdge", "SD-WAN", 2, 2048, [100, 10500]),
+      defineNode("Check Point Gaia", "Security", 4, 6144),
+      defineNode("Chrome", "Container", 1, 2048),
+      defineNode("Code-Server (Python/Terraform)", "Community Contributed", 1, 4096),
+      defineNode("CoreOS", "Linux", 2, 2000, [100, 64000]),
+      defineNode("CSR1000v", "Routing", 1, 3072, [100, 8000]),
+      defineNode("Cumulus VX", "Community Contributed", 2, 2048),
+      defineNode("Desktop", "Endpoint", 1, 512, 16000),
+      defineNode("DevNet Expert CWS", "Community Contributed", 4, 8192, 1000),
+      defineNode("Dnsmasq", "Container", 1, 512),
+      defineNode("ESA", "Community Contributed", 1, 4096),
+      defineNode("EXOS", "Community Contributed", 1, 512),
+      defineNode("F5-bigip-ve", "Community Contributed", 4, 4096),
+      defineNode("FireboxV", "Community Contributed", 2, 2048, 40000),
+      defineNode("Firefox", "Container", 1, 2048),
+      defineNode("Firepower FMCv", "Security", 4, 32768, 256000),
+      defineNode("Firepower FTDv", "Security", 4, 8192),
+      defineNode("fortigate", "Community Contributed", 1, 2048, 32000),
+      defineNode("FreeBSD", "Community Contributed", 1, 1024),
+      defineNode("FRR", "Container", 1, 256),
+      defineNode("HPE", "Community Contributed", 2, 4096),
+      defineNode("Identity Services Engine (ISE)", "Security", 16, 16384, 300000),
+      defineNode("IOL", "Routing", 1, 1024, [100, 2000]),
+      defineNode("IOL (4E)", "Routing", 1, 1024),
+      defineNode("IOL-L2", "Switching", 1, 1024, [100, 4000]),
+      defineNode("IOS-XE SD-WAN", "SD-WAN", 1, 3072),
+      defineNode("IOS-XRv", "Routing", 1, 3000, [100, 4000]),
+      defineNode("IOS-XRv 9000", "Routing", 4, 20480, [5000, 64000]),
+      defineNode("IOSv", "Routing", 1, 512, [100, 2000]),
+      defineNode("IOSv-L2", "Switching", 1, 768, [100, 4000]),
+      defineNode("Juniper vMX VCP", "Community Contributed", 1, 1024),
+      defineNode("Juniper vMX VFP", "Community Contributed", 3, 4096),
+      defineNode("Juniper vQFX PFE", "Community Contributed", 1, 2048),
+      defineNode("Juniper vQFX RE", "Community Contributed", 1, 1024),
+      defineNode("Juniper vSRX 3.0", "Community Contributed", 2, 4096),
+      defineNode("Kali Linux", "Linux", 2, 4096),
+      defineNode("Meraki vMX", "Community Contributed", 2, 4096),
+      defineNode("MikroTik-chr", "Community Contributed", 1, 1024),
+      defineNode("Net-Tools", "Container", 1, 512),
+      defineNode("NetBox", "Community Contributed", 1, 2048, 16000),
+      defineNode("Netflow", "Container", 1, 512),
+      defineNode("Nginx", "Container", 1, 256),
+      defineNode("NX-OS 9500-148", "Community Contributed", 4, 16384),
+      defineNode("NX-OSv", "Switching", 1, 3000, [100, 4000]),
+      defineNode("NX-OSv 9000", "Switching", 2, 12288, [2500, 10200]),
+      defineNode("OpenBSD", "Community Contributed", 1, 1024),
+      defineNode("OPNsense Firewall", "Community Contributed", 1, 2048),
+      defineNode("PAN-OS 10", "Community Contributed", 2, 4096),
+      defineNode("Radius", "Container", 1, 512),
+      defineNode("Server", "Utility", 1, 128, 16000),
+      defineNode("SONiC Virtual Switch (VM)", "Community Contributed", 2, 4096),
+      defineNode("Splunk", "Container", 1, 4096),
+      defineNode("Syslog", "Container", 1, 512),
+      defineNode("TacPlus", "Container", 1, 512),
+      defineNode("ThousandEyes Agent", "Container", 1, 2048),
+      defineNode("Tiny Core Linux", "Linux", 1, 128),
+      defineNode("TRex", "Utility", 1, 512, [100, 2000]),
+      defineNode("Ubuntu", "Linux", 1, 2048, 64000),
+      defineNode("UCSPE", "Community Contributed", 1, 2048, 20000),
+      defineNode("Unmanaged Switch", "Utility", 0, 0),
+      defineNode("vEOS", "Community Contributed", 2, 2048),
+      defineNode("Virtual AP (vAP)", "Wireless", 1, 1024),
+      defineNode("vJunos Router", "Community Contributed", 4, 6144),
+      defineNode("vJunos Switch", "Community Contributed", 4, 6144),
+      defineNode("vJunosEvolved", "Community Contributed", 4, 8192),
+      defineNode("VOSS", "Community Contributed", 1, 2048),
+      defineNode("vWLC", "Wireless", 1, 2048),
+      defineNode("VyOS", "Community Contributed", 1, 512),
+      defineNode("WAN Emulator", "Utility", 1, 512, [100, 2000]),
+      defineNode("Windows 10", "Community Contributed", 2, 6144),
+      defineNode("Windows 11", "Community Contributed", 2, 6144),
+      defineNode("Windows Server 2019", "Community Contributed", 4, 16384, 64000),
+      defineNode("Windows Server 2022", "Community Contributed", 4, 16384, 64000),
+      defineNode("Windows Server 2025", "Community Contributed", 4, 16384, 64000),
+      defineNode("Wireless AP", "Wireless", 1, 2048, 64000),
+      defineNode("Wireless Client", "Wireless", 1, 2048, 64000),
+      defineNode("WSA", "Community Contributed", 3, 8192),
+      defineNode("XRd", "Routing", 1, 2048, 0)
     ];
 
+    // Only add a profile when the original spreadsheet explicitly supports oversubscription.
+    // Nodes without a profile automatically use their catalog values for both minimum and recommended sizing.
     const spreadsheetResourceProfiles = {
       "A10 vThunder LB": { minMemoryFactor: 1, recommendedMemoryFactor: 1, minCpuFactor: 1, recommendedCpuFactor: 1 },
       "Alpine": { minMemoryFactor: 0.75, recommendedMemoryFactor: 1, minCpuFactor: 1, recommendedCpuFactor: 1 },
@@ -960,6 +972,17 @@
       "WAN Emulator": { minMemoryFactor: 0.75, recommendedMemoryFactor: 1, minCpuFactor: 1, recommendedCpuFactor: 1 }
     };
 
+    // Explicitly reviewed profiles for nodes added after the original spreadsheet.
+    const approvedResourceProfileOverrides = {
+      "Kali Linux": { minMemoryFactor: 0.75, recommendedMemoryFactor: 1, minCpuFactor: 1, recommendedCpuFactor: 1 },
+      "Virtual AP (vAP)": { minMemoryFactor: 0.75, recommendedMemoryFactor: 1, minCpuFactor: 0.25, recommendedCpuFactor: 0.5 }
+    };
+
+    const resourceProfiles = {
+      ...spreadsheetResourceProfiles,
+      ...approvedResourceProfileOverrides
+    };
+
     applyResourceProfiles(devices);
 
     const deviceAliases = {
@@ -967,6 +990,9 @@
     };
 
     const topologyNodeMap = {
+      ...Object.fromEntries(devices.flatMap((device) =>
+        device.topologyIds.map((nodeId) => [nodeId, device.name])
+      )),
       "a10vthunder": "A10 vThunder LB",
       "alpine": "Alpine",
       "alpine-trex": "TRex",
@@ -1300,7 +1326,7 @@
 
     function applyResourceProfiles(deviceList) {
       for (const device of deviceList) {
-        const profile = spreadsheetResourceProfiles[device.name] || {};
+        const profile = resourceProfiles[device.name] || {};
         const recommendedMemoryFactor = profile.noOversubscription ? 1 : profile.recommendedMemoryFactor ?? 1;
         const minMemoryFactor = profile.noOversubscription ? 1 : profile.minMemoryFactor ?? 1;
         const recommendedCpuFactor = profile.noOversubscription ? 1 : profile.recommendedCpuFactor ?? 1;
@@ -1313,7 +1339,7 @@
         device.recommendedDiskMb = device.diskMaxMb;
         device.minDiskMb = profile.noOversubscription ? device.diskMaxMb : device.diskMinMb;
         device.oversubscriptionSupported =
-          Boolean(spreadsheetResourceProfiles[device.name]) &&
+          Boolean(resourceProfiles[device.name]) &&
           !profile.noOversubscription &&
           (device.minMemoryMb < device.recommendedMemoryMb ||
             device.minVcpus < device.recommendedVcpus ||
